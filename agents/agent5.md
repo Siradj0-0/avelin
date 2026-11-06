@@ -3,9 +3,9 @@
 ## Current state
 - Assigned area: `avelin/cleanup/`. Existing `avelin/storage.py`, `tests/`, and CI files are outside the area; coordinate with their owners before editing.
 - User assigned Agent 5. The existing `agent-state` branch is authoritative; do not replace it. Coordination issue: https://github.com/Siradj0-0/avelin/issues/31.
-- Preview contract task claimed in https://github.com/Siradj0-0/avelin/issues/55; first PR is https://github.com/Siradj0-0/avelin/pull/60, commit `5a35d4b98c4598e4c43afb2fa23e50c07491ea5d`. Await independent review; do not self-merge. Related package-cache planner https://github.com/Siradj0-0/avelin/pull/12 must not be duplicated.
+- Preview contract task claimed in https://github.com/Siradj0-0/avelin/issues/55; first PR is https://github.com/Siradj0-0/avelin/pull/60, head `97ea399cf37ddc53d19f4dc7240ddd4894a4dfa1`. Await independent review; do not self-merge. Related package-cache planner https://github.com/Siradj0-0/avelin/pull/12 must not be duplicated.
 - On base `092639be2643ae464d003f56d1d78a7a5719d0bd`, focused preview tests: 7 passed; `python -m ci.run_unit_tests`: 79 run, 14 skipped; `python -m compileall -q avelin tests`: passed. Pushed files matched tested files. GTK was not visually tested and Python 3.10 runtime was not tested.
-- Preview tests currently require explicit invocation and are not in shared CI discovery; request Agent 10 coordination before modifying tests/CI.
+- CI discovery bridge added on PR #60 after the Agent 2 review: exact head ran 86 tests, OK (14 skipped), including all seven preview tests; compile passed. Agent 10 was asked to review the new shared test bridge; Agent 2 was asked to re-review: https://github.com/Siradj0-0/avelin/pull/60#issuecomment-6695198686.
 - Independently reviewed PR #12 head `e7d7c518ba893041dd23f75235ff1dbead76879b`: https://github.com/Siradj0-0/avelin/pull/12#issuecomment-6694992796. Its branch suite passed 53 tests and compile check passed, but current CI runner is absent; rebase and exact-head re-review requested.
 - Asked Agent 10 to coordinate discovery of cleanup tests: https://github.com/Siradj0-0/avelin/issues/55#issuecomment-6694981601.
 - Filed storage boundary hardening issue https://github.com/Siradj0-0/avelin/issues/71; a disposable fixture confirmed a prefix symlink traverses outside its containing directory. Same-device bind mount not tested. Asked Agent 1 to identify owner before edits outside scope.
@@ -13,7 +13,7 @@
 - GitHub MCP intermittently responds with HTTP 429/discovery errors. Local `gh auth status` reports no GitHub login. Four further subagent starts failed with `The tool capability failed unexpectedly.`
 
 ## Backlog
-1. Integrate preview tests into shared CI, with Agent 10 coordination.
+1. Follow up Agent 10 review and exact-head CI for the preview test discovery bridge.
 2. Design trusted-root descriptor traversal with prefix-symlink rejection and fail-closed unsupported handling.
 3. Handle mount boundaries, including same-device bind mounts; test in disposable namespace.
 4. Estimate allocated bytes with hard-link deduplication, sparse files and partial statuses.
