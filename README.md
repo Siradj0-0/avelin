@@ -10,9 +10,9 @@ A little more clarity for your Linux machine. Avelin is an early-stage **native 
 
 - Detects distribution, desktop, CPU, PCI graphics devices (when `lspci` is present), RAM, root filesystem capacity and active zram swap when readable.
 - Dashboard samples CPU and RAM every two seconds and graphs an in-memory history; root storage is capacity used, not disk I/O. Unavailable readings are not reported as zero.
-- Optional power-profile selection, when `powerprofilesctl` and its service offer supported profiles. A confirmation explains the battery and heat tradeoffs.
+- Optional power-profile selection, when `powerprofilesctl` and its service offer supported profiles. The change is system-wide; a confirmation explains battery and heat tradeoffs.
 - Seven reversible, allowlisted GNOME user preferences, including animations, hot corner, clock, battery display and cursor blinking. These are not all performance optimizations; unsupported settings are disabled.
-- An on-demand, read-only scan estimates allocated space in common cache, home trash, APT archive, system journal and user Flatpak locations. It marks incomplete scans, does not follow symlinks or cross filesystems, and does not equate size with reclaimable space. It never removes scan results.
+- An on-demand, read-only scan estimates allocated space in common cache, home trash, APT archive, system journal and user Flatpak locations. It marks incomplete scans, skips symlink entries and different-device entries, and does not equate size with reclaimable space. Initial path prefixes may contain symlinks and same-device bind mounts may be traversed. It never removes scan results.
 - **Empty trash** is a separate, manually confirmed action. It permanently removes trash from locations managed by your desktop, including supported mounted volumes. Check the contents and your backups first.
 - Checks up to 30 GitHub releases for numeric `vMAJOR.MINOR.PATCH` tags on startup and on request, including prereleases. If newer, it offers the releases page; it **does not download or install updates**. GitHub can see normal network metadata such as your IP address.
 - Source SVG logo, MIT license, contribution and security guidance, research, unit tests and a CI configuration.
@@ -38,7 +38,7 @@ python3 -m compileall -q avelin
 
 Avelin never silently deletes files or runs privileged commands. Emptying trash is irreversible; inspect it and back up first. The storage scan is not a cleanup recommendation and may be partial. Package caches, logs, app data, personal files and Flatpak data are **not deleted**. GPU usage, disk I/O, disk models, privileged optimization, package installation, zram changes, desktop switching, rollback snapshots and self-updating are **not implemented**.
 
-Flatpak, DEB, Arch, AppImage and other packages are planned, not available. See [research and roadmap](docs/research-and-roadmap.md) and [design direction](DESIGN.md). A future v1.0.0 is the goal for production readiness, but no software can guarantee it will work on every machine.
+An experimental local DEB build path is available; no installer has been published. Flatpak, Arch, AppImage and other packages remain planned. See [packaging documentation](docs/packaging.md). See [research and roadmap](docs/research-and-roadmap.md) and [design direction](DESIGN.md). A future v1.0.0 is the goal for production readiness, but no software can guarantee it will work on every machine.
 
 ## Contributing
 
