@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import errno
+import math
 import os
 from pathlib import Path
 import re
@@ -66,7 +67,7 @@ class HardwareMonitor:
         self.root = Path(root)
         self.env = os.environ if environ is None else environ
         self.clock = clock
-        self._previous: dict[str, tuple[tuple[str, str, str | None], int, float]] = {}
+        self._previous: dict[str, tuple[tuple[str, str, str], int, float]] = {}
 
     def _sandbox(self) -> bool:
         # Positive signals only: absence of a marker cannot prove host visibility.
@@ -94,21 +95,44 @@ class HardwareMonitor:
         except (UnicodeError, ValueError):
             return Reading(None, 'invalid', str(path))
 
-    def _integer(self, path: Path, sandbox: bool, *, minimum: int = 0,
-                 maximum: int | None = None, factor: int = 1) -> Reading:
-        result = self._read(path, sandbox)
+    def _read_at(self, directory: int, relative: str, source: Path, sandbox: bool) -> Reading:
+        try:
+            fd = os.open(relative, os.O_RDONLY | os.O_CLOEXEC, dir_fd=directory)
+            try:
+                with os.fdopen(fd, 'r', encoding='utf-8', errors='strict') as stream:
+                    fd = -1
+                    text = stream.read(4097)
+            finally:
+                if fd != -1:
+                    os.close(fd)
+            if len(text) > 4096 or not text.strip():
+                return Reading(None, 'invalid', str(source))
+            return Reading(text.strip(), 'ok', str(source))
+        except OSError as exc:
+            return Reading(None, self._error(exc, sandbox), str(source))
+        except (UnicodeError, ValueError):
+            return Reading(None, 'invalid', str(source))
+
+    @staticmethod
+    def _parse_integer(result: Reading, *, minimum: int = 0,
+                       maximum: int | None = None, factor: int = 1) -> Reading:
         if result.status != 'ok':
             return result
         text = result.value
         if not isinstance(text, str) or not re.fullmatch(r'[0-9]+', text):
-            return Reading(None, 'invalid', str(path))
+            return Reading(None, 'invalid', result.source)
         try:
             value = int(text)
         except ValueError:
-            return Reading(None, 'invalid', str(path))
+            return Reading(None, 'invalid', result.source)
         if value < minimum or (maximum is not None and value > maximum):
-            return Reading(None, 'invalid', str(path))
-        return Reading(value * factor, 'ok', str(path))
+            return Reading(None, 'invalid', result.source)
+        return Reading(value * factor, 'ok', result.source)
+
+    def _integer(self, path: Path, sandbox: bool, *, minimum: int = 0,
+                 maximum: int | None = None, factor: int = 1) -> Reading:
+        return self._parse_integer(self._read(path, sandbox), minimum=minimum,
+                                   maximum=maximum, factor=factor)
 
     def _list(self, path: Path, sandbox: bool) -> tuple[list[Path], str]:
         try:
@@ -116,60 +140,104 @@ class HardwareMonitor:
         except OSError as exc:
             return [], self._error(exc, sandbox)
 
-    def _busy(self, path: Path, key: str, identity: tuple[str, str, str | None] | None,
-              now: float, sandbox: bool,
-              new: dict[str, tuple[tuple[str, str, str | None], int, float]]) -> Reading:
-        result = self._read(path, sandbox)
-        if result.status != 'ok':
-            return result
-        fields = str(result.value).split()
-        if len(fields) < 11 or any(not re.fullmatch(r'[0-9]+', v) for v in fields):
-            return Reading(None, 'invalid', str(path))
+    def _busy(self, block: Path, sandbox: bool,
+              new: dict[str, tuple[tuple[str, str, str], int, float]]) -> Reading:
+        stat_path = block / 'stat'
         try:
-            ticks = int(fields[9])
-        except ValueError:
-            return Reading(None, 'invalid', str(path))
-        if identity is None:
-            return Reading(None, 'unavailable', str(path))
-        new[key] = (identity, ticks, now)
-        previous = self._previous.get(key)
-        if previous is None or previous[0] != identity:
-            return Reading(None, 'warming_up', str(path))
-        elapsed = now - previous[2]
-        delta = ticks - previous[1]
-        if delta < 0:
-            return Reading(None, 'counter_reset', str(path))
-        if elapsed <= 0 or delta > elapsed * 1000:
-            return Reading(None, 'invalid', str(path))
-        return Reading(100.0 * delta / (elapsed * 1000), 'ok', str(path))
+            directory = os.open(block, os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
+        except OSError as exc:
+            return Reading(None, self._error(exc, sandbox), str(block))
+        try:
+            try:
+                pinned = os.fstat(directory)
+                visible = os.stat(block)
+            except OSError as exc:
+                return Reading(None, self._error(exc, sandbox), str(block))
+            token = (pinned.st_dev, pinned.st_ino)
+            if token != (visible.st_dev, visible.st_ino):
+                return Reading(None, 'unavailable', str(block))
+
+            def read(name: str) -> Reading:
+                return self._read_at(directory, name, block / name, sandbox)
+
+            def identity() -> tuple[tuple[str, str] | None, Reading | None]:
+                dev = read('dev')
+                if dev.status != 'ok':
+                    return None, dev
+                if not re.fullmatch(r'[0-9]+:[0-9]+', str(dev.value)):
+                    return None, Reading(None, 'invalid', dev.source)
+                seq = self._parse_integer(read('diskseq'))
+                if seq.status != 'ok':
+                    return None, seq
+                return (str(dev.value), str(seq.value)), None
+
+            before, error = identity()
+            if error is not None:
+                return error
+            accounting = self._parse_integer(read('queue/iostats'), maximum=1)
+            if accounting.status != 'ok':
+                return accounting
+            if accounting.value != 1:
+                return Reading(None, 'unavailable', accounting.source)
+            stat = read('stat')
+            # The observation time belongs to this device's actual counter read,
+            # not the beginning of a potentially slow inventory scan.
+            observed = self.clock()
+            if stat.status != 'ok':
+                return stat
+            fields = str(stat.value).split()
+            if len(fields) < 11 or any(not re.fullmatch(r'[0-9]+', v) for v in fields):
+                return Reading(None, 'invalid', str(stat_path))
+            try:
+                ticks = int(fields[9])
+            except ValueError:
+                return Reading(None, 'invalid', str(stat_path))
+            after, error = identity()
+            if error is not None:
+                return error
+            accounting_after = self._parse_integer(read('queue/iostats'), maximum=1)
+            if accounting_after.status != 'ok':
+                return accounting_after
+            if accounting_after.value != 1:
+                return Reading(None, 'unavailable', accounting_after.source)
+            try:
+                visible_after = os.stat(block)
+                pinned_after = os.fstat(directory)
+            except OSError as exc:
+                return Reading(None, self._error(exc, sandbox), str(block))
+            if (before != after or token != (visible_after.st_dev, visible_after.st_ino)
+                    or token != (pinned_after.st_dev, pinned_after.st_ino)):
+                return Reading(None, 'unavailable', str(block))
+            if not math.isfinite(observed):
+                return Reading(None, 'invalid', str(stat_path))
+            ident = (before[0], f'{token[0]}:{token[1]}', before[1])
+            new[block.name] = (ident, ticks, observed)
+            previous = self._previous.get(block.name)
+            if previous is None or previous[0] != ident:
+                return Reading(None, 'warming_up', str(stat_path))
+            elapsed = observed - previous[2]
+            delta = ticks - previous[1]
+            if delta < 0:
+                return Reading(None, 'counter_reset', str(stat_path))
+            if elapsed <= 0 or delta > elapsed * 1000:
+                return Reading(None, 'invalid', str(stat_path))
+            return Reading(100.0 * delta / (elapsed * 1000), 'ok', str(stat_path))
+        finally:
+            os.close(directory)
 
     def sample(self) -> Snapshot:
         sandbox = self._sandbox()
         now = self.clock()
         blocks, storage_status = self._list(self.sys / 'block', sandbox)
         storage = []
-        new: dict[str, tuple[tuple[str, str, str | None], int, float]] = {}
+        new: dict[str, tuple[tuple[str, str, str], int, float]] = {}
         for block in blocks:
             # /sys/block lists whole block devices, not individual partitions.
             dev = self._read(block / 'dev', sandbox)
             if dev.status == 'ok' and not re.fullmatch(r'[0-9]+:[0-9]+', str(dev.value)):
                 dev = Reading(None, 'invalid', dev.source)
-            diskseq = self._integer(block / 'diskseq', sandbox)
-            try:
-                real_path = str(block.resolve(strict=True))
-            except (OSError, RuntimeError):
-                real_path = ''
-            identity = ((str(dev.value), real_path,
-                         str(diskseq.value) if diskseq.status == 'ok' else None)
-                        if dev.status == 'ok' and real_path else None)
             rotational = self._integer(block / 'queue' / 'rotational', sandbox, maximum=1)
-            accounting = self._integer(block / 'queue' / 'iostats', sandbox, maximum=1)
-            if accounting.status != 'ok':
-                busy = Reading(None, accounting.status, accounting.source)
-            elif accounting.value != 1:
-                busy = Reading(None, 'unavailable', accounting.source)
-            else:
-                busy = self._busy(block / 'stat', block.name, identity, now, sandbox, new)
+            busy = self._busy(block, sandbox, new)
             storage.append(StorageDevice(
                 block.name, dev, self._read(block / 'device' / 'model', sandbox),
                 self._integer(block / 'size', sandbox, factor=512), rotational,

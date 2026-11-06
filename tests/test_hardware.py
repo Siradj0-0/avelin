@@ -101,7 +101,7 @@ class HardwareTests(unittest.TestCase):
         self.put(p / 'dev', 'bad')
         disk = self.monitor.sample().storage[0]
         self.assertEqual(disk.device_number.status, 'invalid')
-        self.assertEqual(disk.busy_percent.status, 'unavailable')
+        self.assertEqual(disk.busy_percent.status, 'invalid')
         self.put(p / 'dev', '8:16')
         self.assertEqual(self.monitor.sample().storage[0].busy_percent.status, 'warming_up')
         (p / 'stat').unlink()
@@ -222,27 +222,138 @@ class HardwareTests(unittest.TestCase):
     def test_unreadable_interval_cannot_bridge_storage_samples(self):
         p = self.disk()
         self.monitor.sample()
-        original = Path.open
-        def restricted(path, *args, **kwargs):
-            if path == p / 'stat':
-                raise PermissionError(errno.EACCES, 'denied', str(path))
-            return original(path, *args, **kwargs)
+        original = self.monitor._read_at
+        def restricted(fd, name, source, sandbox):
+            if name == 'stat':
+                from avelin.hardware import Reading
+                return Reading(None, 'permission', str(source))
+            return original(fd, name, source, sandbox)
         self.now += 1
-        with patch.object(Path, 'open', restricted):
+        with patch.object(self.monitor, '_read_at', side_effect=restricted):
             reading = self.monitor.sample().storage[0].busy_percent
         self.assertEqual(reading.status, 'permission')
         self.now += 1
         self.assertEqual(self.monitor.sample().storage[0].busy_percent.status, 'warming_up')
 
-    def test_missing_diskseq_still_samples_and_changed_diskseq_warms_up(self):
+    def test_missing_diskseq_cannot_establish_identity(self):
         p = self.disk()
         (p / 'diskseq').unlink()
-        self.monitor.sample()
+        self.assertEqual(self.monitor.sample().storage[0].busy_percent.status, 'unavailable')
         self.now += 1
         self.stat(p, 200)
-        self.assertEqual(self.monitor.sample().storage[0].busy_percent.value, 10.0)
+        self.assertEqual(self.monitor.sample().storage[0].busy_percent.status, 'unavailable')
         self.put(p / 'diskseq', '3')
         self.now += 1
+        self.assertEqual(self.monitor.sample().storage[0].busy_percent.status, 'warming_up')
+
+    def test_timestamp_is_per_device_stat_read_not_scan_start(self):
+        p = self.disk(ticks=100)
+        self.now = 0.0
+        self.monitor.sample()
+        self.stat(p, 2000)
+        self.now = 10.0
+        original = self.monitor._read_at
+        def delayed(fd, name, source, sandbox):
+            if name == 'stat':
+                self.now = 19.0
+            return original(fd, name, source, sandbox)
+        with patch.object(self.monitor, '_read_at', side_effect=delayed):
+            result = self.monitor.sample().storage[0].busy_percent
+        self.assertEqual((result.status, result.value), ('ok', 10.0))
+
+    def test_symlink_replacement_during_stat_cannot_publish_or_retain_baseline(self):
+        old = self.disk(ticks=100)
+        devices = self.sys / 'devices'
+        devices.mkdir()
+        old.rename(devices / 'old')
+        new = devices / 'new'
+        new.mkdir()
+        for name, value in [('dev', '8:0'), ('diskseq', '2'), ('queue/iostats', '1'),
+                            ('size', '2048'), ('queue/rotational', '1')]:
+            self.put(new / name, value)
+        self.stat(new, 600)
+        link = self.sys / 'block' / 'sda'
+        link.symlink_to(devices / 'old')
+        self.monitor.sample()
+        self.now += 1
+        original = self.monitor._read_at
+        def swapped(fd, name, source, sandbox):
+            if name == 'stat':
+                link.unlink()
+                link.symlink_to(new)
+            return original(fd, name, source, sandbox)
+        with patch.object(self.monitor, '_read_at', side_effect=swapped):
+            result = self.monitor.sample().storage[0].busy_percent
+        self.assertIsNone(result.value)
+        self.assertEqual(result.status, 'unavailable')
+        self.now += 1
+        self.assertEqual(self.monitor.sample().storage[0].busy_percent.status, 'warming_up')
+
+    def test_diskseq_or_dev_change_during_stat_invalidates_sample(self):
+        for field, new_value in [('diskseq', '2'), ('dev', '8:16')]:
+            with self.subTest(field=field):
+                p = self.disk()
+                monitor = HardwareMonitor(self.sys, self.proc, self.root, {}, lambda: self.now)
+                monitor.sample()
+                self.now += 1
+                original = monitor._read_at
+                def mutate(fd, name, source, sandbox):
+                    value = original(fd, name, source, sandbox)
+                    if name == 'stat':
+                        self.put(p / field, new_value)
+                    return value
+                with patch.object(monitor, '_read_at', side_effect=mutate):
+                    result = monitor.sample().storage[0].busy_percent
+                self.assertEqual(result.status, 'unavailable')
+                self.assertIsNone(result.value)
+                self.now += 1
+                self.assertEqual(monitor.sample().storage[0].busy_percent.status, 'warming_up')
+
+    def test_each_disk_has_its_own_observation_time(self):
+        first = self.disk('sda', '8:0', 100)
+        second = self.disk('sdb', '8:16', 100, '2')
+        self.now = 0
+        self.monitor.sample()
+        self.stat(first, 1100)
+        self.stat(second, 1100)
+        self.now = 10
+        original = self.monitor._read_at
+        def delayed(fd, name, source, sandbox):
+            if name == 'stat' and source == second / 'stat':
+                self.now = 20
+            return original(fd, name, source, sandbox)
+        with patch.object(self.monitor, '_read_at', side_effect=delayed):
+            disks = self.monitor.sample().storage
+        self.assertEqual(disks[0].busy_percent.value, 10.0)
+        self.assertEqual(disks[1].busy_percent.value, 5.0)
+
+    def test_permission_reading_anchored_identity_is_not_a_value(self):
+        self.disk()
+        original = __import__('os').open
+        def restricted(path, flags, *args, **kwargs):
+            if path == 'diskseq':
+                raise PermissionError(errno.EACCES, 'denied')
+            return original(path, flags, *args, **kwargs)
+        with patch('avelin.hardware.os.open', side_effect=restricted):
+            result = self.monitor.sample().storage[0].busy_percent
+        self.assertEqual(result.status, 'permission')
+        self.assertIsNone(result.value)
+
+    def test_accounting_changes_during_stat_invalidates_sample(self):
+        p = self.disk()
+        self.monitor.sample()
+        original = self.monitor._read_at
+        def toggle(fd, name, source, sandbox):
+            result = original(fd, name, source, sandbox)
+            if name == 'stat':
+                self.put(p / 'queue' / 'iostats', '0')
+            return result
+        self.now += 1
+        with patch.object(self.monitor, '_read_at', side_effect=toggle):
+            result = self.monitor.sample().storage[0].busy_percent
+        self.assertEqual(result.status, 'unavailable')
+        self.assertIsNone(result.value)
+        self.put(p / 'queue' / 'iostats', '1')
         self.assertEqual(self.monitor.sample().storage[0].busy_percent.status, 'warming_up')
 
     def test_no_commands_or_writes_during_sampling(self):
