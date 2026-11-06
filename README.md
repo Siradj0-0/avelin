@@ -6,6 +6,8 @@ A little more clarity for your Linux machine. Avelin is an early-stage **native 
 
 > **v0.1.0 is an experimental, source-only prerelease.** No installers are available. The GTK interface still needs visual, accessibility and real-distro testing. Do not use this as a backup or on a critical machine.
 
+> **Power-profile safety notice:** In the v0.1.0 prerelease, changing the power profile through Avelin can cancel other applications' power-profile holds. Switching back does not restore those holds. Avoid changing power profiles through Avelin until a corrected release is available. See [issue #15](https://github.com/Siradj0-0/avelin/issues/15).
+
 ## What's in this preview
 
 - Detects distribution, desktop, CPU, PCI graphics devices (when `lspci` is present), RAM, root filesystem capacity and active zram swap when readable.
@@ -25,7 +27,7 @@ On a Linux desktop, install Python 3.10+, GTK 4, PyGObject for GTK 4, the PyGObj
 python3 -m avelin
 ```
 
-Use your distribution Python with GI bindings. No root is needed. The included desktop file is a development template, not an installer; its module must be installed on Python's import path and icon registered before deployment.
+Use your distribution Python with GI bindings. No root is needed. The included desktop file is a development template, not an installer; its module must be installed on Python's import path and icon registered before deployment. For a Debian/Ubuntu source setup example and troubleshooting, see [running from source](docs/source-setup.md).
 
 Run tests:
 
