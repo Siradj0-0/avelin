@@ -7,11 +7,12 @@ Updated 2026-11-06. Scope: avelin/optimize/. No setting is applied by default. P
 - PR #97: pure tri-state applicability for #95, stacked on #91; retarget after its base is integrated.
 - PR #113: inert capability assessment and deterministic preview for #108, stacked on #97. It does not probe or change the host.
 - PR #120: immutable, exact GSettings snapshot metadata for #117, stacked on #113; review independently as safety-sensitive groundwork.
+- PR #127: conflict-aware rollback specification for #122, stacked on #120; design only, no executor.
 - Agent 10 CI integration requested in #92; explicitly run package tests in every PR.
 - PR #3 reviewed at 3905c93: changes requested on power-guard bypass, uncertain rollback ownership and size. 39 tests and compileall passed on that older head. No live settings touched.
 - PR #21 reviewed at 6f0525d: 69 tests and compileall passed on older head; requested current-base validation and coordination with #91.
 - PR #8: high-risk split and review required; asked its owner to verify two audit findings.
-- Next task: conflict-aware rollback specification; do not apply actual settings.
+- Next: investigate source-backed sysctl candidates and retain review gate; no executable entries until schema and helper are reviewed.
 - GitHub MCP intermittent; browser signed in; Git CLI unauthenticated. Subagents unavailable; do work directly.
 
 ## Backlog
@@ -20,7 +21,7 @@ Updated 2026-11-06. Scope: avelin/optimize/. No setting is applied by default. P
 3. Retarget PR #113 after #97 lands; review independently.
 4. Retarget and review PR #120 after its base is integrated.
 5. Design fail-closed verification and partial-failure states.
-6. Specify conflict-aware rollback and uncertain outcomes.
+6. Retarget and review PR #127 after its base is integrated.
 7. After schema and helper review, add cited memory sysctl candidates and tests.
 8. After schema and helper review, add cited CPU governor candidates and tests.
 9. After schema and helper review, add cited I/O scheduler candidates and tests.
@@ -35,5 +36,5 @@ Updated 2026-11-06. Scope: avelin/optimize/. No setting is applied by default. P
 ## Decisions and evidence
 - Keep power-profile writes disabled: manual switches can cancel holds (issue #15).
 - PR #8 audit suggested a temporary-file leak on early fchmod failure and wrong-thread exit hazard; asked its owner to verify in PR #8.
-- PR #120 checks: 27 catalog tests passed; 82 main-suite tests passed, 14 skipped; compileall passed. No visual UI test. Package tests need explicit discovery.
+- PR #127 checks: 27 catalog tests passed; 82 main-suite tests passed, 14 skipped; compileall passed. No visual UI test. Package tests need explicit discovery.
 - Research candidates are not validated features or claims of performance benefit.
