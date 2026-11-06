@@ -1,5 +1,6 @@
 """GTK UI behavior checks. Run with a display, e.g. xvfb-run -a python -m unittest tests.test_ui_accessibility."""
 import os
+import time
 import unittest
 from unittest.mock import Mock, patch
 
@@ -49,6 +50,37 @@ class UIAccessibilityTests(unittest.TestCase):
         self.window.destroy()
         for item in reversed(self.patches):
             item.stop()
+
+    def drain_setting_pending(self, switch, timeout=5.0, context=None):
+        if context is None:
+            context = GLib.MainContext.default()
+        deadline = time.monotonic() + timeout
+        while switch in self.window.setting_pending:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                self.fail('Setting callback did not complete before the deadline')
+            if not context.iteration(False):
+                time.sleep(min(0.01, remaining))
+
+    def test_pending_drain_fails_when_callback_is_missing(self):
+        switch = object()
+        self.window.setting_pending.add(switch)
+        try:
+            with self.assertRaisesRegex(AssertionError, 'did not complete'):
+                self.drain_setting_pending(switch, timeout=0, context=Mock())
+        finally:
+            self.window.setting_pending.discard(switch)
+
+    def test_pending_drain_completes_when_callback_is_dispatched(self):
+        switch = object()
+        self.window.setting_pending.add(switch)
+        context = Mock()
+        context.iteration.side_effect = lambda _block: self.window.setting_pending.discard(switch) or True
+        try:
+            self.drain_setting_pending(switch, context=context)
+            context.iteration.assert_called_once_with(False)
+        finally:
+            self.window.setting_pending.discard(switch)
 
     def test_stylesheet_parses(self):
         provider = Gtk.CssProvider()
@@ -165,8 +197,7 @@ class UIAccessibilityTests(unittest.TestCase):
                     switch.set_active(not initial)
                     self.assertFalse(switch.get_sensitive())
                     self.assertIn(switch, self.window.setting_pending)
-                    while switch in self.window.setting_pending:
-                        GLib.MainContext.default().iteration(False)
+                    self.drain_setting_pending(switch)
                 write.assert_called_once_with('enable-animations', not initial)
                 read.assert_called_once_with('enable-animations')
                 expected = initial if actual is None else actual
@@ -186,8 +217,7 @@ class UIAccessibilityTests(unittest.TestCase):
         with patch.object(actions, 'set_setting', side_effect=RuntimeError('write denied')) as write, \
              patch.object(actions, 'setting_state', side_effect=RuntimeError('read failed')):
             switch.set_active(True)
-            while switch in self.window.setting_pending:
-                GLib.MainContext.default().iteration(False)
+            self.drain_setting_pending(switch)
         write.assert_called_once()
         self.assertFalse(switch.get_sensitive())
         self.assertIn('write denied', self.window.tune_feedback.get_text())
@@ -202,8 +232,7 @@ class UIAccessibilityTests(unittest.TestCase):
              patch.object(actions, 'setting_state') as read:
             removed.set_active(True)
             parent.remove(removed)
-            while removed in self.window.setting_pending:
-                GLib.MainContext.default().iteration(False)
+            self.drain_setting_pending(removed)
         write.assert_called_once()
         read.assert_not_called()
 
@@ -217,8 +246,7 @@ class UIAccessibilityTests(unittest.TestCase):
             switch.set_active(True)
             # A programmatic state-set during pending rollback must not write again.
             switch.set_active(False)
-            while switch in self.window.setting_pending:
-                GLib.MainContext.default().iteration(False)
+            self.drain_setting_pending(switch)
         write.assert_called_once()
         self.assertFalse(switch.get_sensitive())
         self.assertIn('write denied', self.window.tune_feedback.get_text())
