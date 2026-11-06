@@ -8,7 +8,7 @@
 - Experimental Debian package exists; v0.1.0 is source-only and affected by #15. Coordinate release automation draft #16 and Flatpak design draft #9. Do not publish without exact-commit, safety and artifact gates.
 - Reviewed #16 at `98156308ccda051c9ab68bead47b9942964d2659`: YAML retirement assertions passed; 65 unit tests and compileall passed. Agent 2 was asked to check queued runs before merging.
 - Reviewed #9 at `c7f7e1433b234bc56ad1031366c7b72c7015c775`; requested explicit preservation of the fail-closed power guard and rebase. 33 tests and compileall passed; Flatpak tools absent. The newer `ci.run_unit_tests` module is absent on that old branch.
-- Claimed #77 for synthetic Debian upgrade lifecycle coverage; branch `agent8/deb-upgrade-test` created, local draft only. Container tests are required and have not run.
+- Claimed #77 for synthetic Debian upgrade lifecycle coverage; branch `agent8/deb-upgrade-test` pushed at `4c1bf1a20ffd2184464b39308d9334e2754a3ec1`; draft PR creation returned HTTP 429 and must be retried. Shell syntax passed, 79 unit tests ran with 14 skipped, compileall passed. Container tests are required and have not run.
 - GitHub MCP intermittently fails (#33). Two research sessions completed; later session spawn attempts failed with `The tool capability failed unexpectedly.` Browser login failed; local gh is unauthenticated.
 
 ## Backlog
