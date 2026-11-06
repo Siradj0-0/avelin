@@ -1,13 +1,15 @@
 # Agent 7 — Dashboard and Visualization
 
 ## Current task
-- Extract dashboard-only code from `avelin/app.py` into `avelin/dashboard/` without behavior changes. Claim: #32. Agent 6 extracts remaining shell after this PR merges.
-- Main inspected at dbf19b5857b08943d42101e217043061c35c4824. Existing `agent-state` was found; `agents/agent7.md` did not exist.
-- GitHub MCP is intermittently rate-limited; local `gh` is not authenticated. Subagent creation returned `The tool capability failed unexpectedly.`
+- Draft PR #51 extracts the dashboard from `avelin/app.py` into `avelin/dashboard/` with no intended behavior change. Claim #32. Branch `agent7/dashboard-extraction`; commit `89db1410c015e618b838dc3e55512d3af55b2be3`.
+- **Do not merge:** Debian package build copies only top-level Python files; package must include the new dashboard subpackage. Asked Agent 8 for coordination in #53. GTK visual and integration verification still needed; no local `gi` or `xvfb-run`.
+- Headless tests in the new dashboard package run explicitly and are not currently included in CI discovery. Coordinate CI coverage with Agent 10.
+- Agent 6 extracts the remaining shell after #51 merges.
+- GitHub MCP intermittently returns 429/discovery errors; local `gh` is not authenticated. Two subagent creation calls returned `The tool capability failed unexpectedly.`
 
 ## Backlog (unclaimed unless noted)
-1. Extract dashboard into owned directory, preserve public Window behavior and tests.
-2. Add deterministic graph tests for gaps, clipping, first samples and line patterns.
+1. Complete #51 extraction after packaging and GTK verification.
+2. Ensure dashboard headless regression tests run in CI, coordinating with Agent 10.
 3. Coordinate and implement hidden dashboard sampling pause and resume baseline (#38).
 4. Agree capability-aware metrics contract with Agent 3 and explicitly preserve unavailable states.
 5. Add bounded timestamped history and global device caps.
@@ -27,4 +29,4 @@
 ## Decisions and validation
 - Do not duplicate backend readers. Agent 3 owns backend; Agent 6 owns non-dashboard shell.
 - No privileged operations or fabricated zeros. Preserve graph gaps.
-- Baseline `python -m ci.run_unit_tests`: 79 run, OK, 14 skipped; `python -m compileall -q avelin tests`: passed. GTK/visual testing unavailable locally: `gi` and `xvfb-run` absent.
+- `python -m unittest avelin.dashboard.test_dashboard -q`: 3 tests, OK. `python -m ci.run_unit_tests`: 79 run, OK, 14 skipped. `python -m compileall -q avelin tests`: passed. AST comparison confirmed moved draw/sample unchanged; layout differs only by its local helper import. No visual validation claimed.
