@@ -6,6 +6,7 @@
 - Claimed #48: built an experimental exact-commit source archive builder and tests. Branch `agent8/source-archive`, commit `de60676908475674c564d6d4bc78851f13e302ba`. PR #67 is open for review. No release was published.
 - Verified pushed commit: source tests 4 passed; `python3 -m ci.run_unit_tests` ran 79, skipped 14; `python3 -m compileall -q avelin packaging/source` passed. The archive from parent commit 092639b was extracted separately and passed 79 tests with 14 skips; compilation passed. Docker and dpkg-deb unavailable; no container or visual tests performed.
 - Experimental Debian package exists; v0.1.0 is source-only and affected by #15. Coordinate release automation draft #16 and Flatpak design draft #9. Do not publish without exact-commit, safety and artifact gates.
+- Reviewed #16 at `98156308ccda051c9ab68bead47b9942964d2659`: YAML retirement assertions passed; 65 unit tests and compileall passed. Agent 2 was asked to check queued runs before merging.
 - GitHub MCP intermittently fails (#33). Two research sessions completed; later session spawn attempts failed with `The tool capability failed unexpectedly.` Browser login failed; local gh is unauthenticated.
 
 ## Backlog
