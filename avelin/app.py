@@ -14,7 +14,11 @@ window { background: #17191c; color: #f2f2ef; }
 .brand { font-size: 23px; font-weight: 700; }
 .overline { color: #aebbb3; font-size: 12px; font-weight: 600; }
 .nav { padding: 11px 14px; margin-top: 5px; border-radius: 8px; background: transparent; box-shadow: none; color: #c2c7c5; }
-.nav:checked { background: #343d37; color: #d7f5de; }
+.nav:hover { background: #2b3030; color: #ffffff; }
+.nav:checked { background: #343d37; color: #d7f5de; font-weight: 700; }
+button:focus-visible, switch:focus-visible, dropdown:focus-visible {
+    outline: 2px solid #a6d5ff; outline-offset: 2px;
+}
 .main { padding: 34px 40px 38px; }
 .title { font-size: 30px; font-weight: 700; }
 .subtitle, .muted { color: #aab2af; }
@@ -28,6 +32,12 @@ window { background: #17191c; color: #f2f2ef; }
 button.action { background: #bedfc4; color: #17251a; font-weight: 700; border-radius: 8px; padding: 9px 14px; }
 button.secondary { background: #343a3d; color: #edf1ee; border-radius: 8px; padding: 8px 14px; }
 button.danger { background: #644039; color: #fff0e9; border-radius: 8px; padding: 8px 14px; }
+button.action:hover { background: #d5efda; }
+button.secondary:hover { background: #495250; }
+button.danger:hover { background: #805247; }
+button.action:disabled, button.secondary:disabled, button.danger:disabled {
+    background: #303437; color: #aeb5b1; opacity: 1;
+}
 .separator { background: #353a3d; min-height: 1px; }
 '''
 
@@ -65,6 +75,7 @@ def details_row(title, value):
     t.set_size_request(130, -1)
     row.append(t)
     v = label(value, wrap=True)
+    v.set_hexpand(True)
     v.set_selectable(True)
     row.append(v)
     return row
@@ -79,6 +90,9 @@ class Window(Gtk.ApplicationWindow):
         self.cpu_history = deque(maxlen=60)
         self.mem_history = deque(maxlen=60)
         self.metric_labels = {}
+        self.metric_descriptions = {}
+        self.setting_handlers = {}
+        self.setting_pending = set()
         self.update_label = None
         root = box(False)
         self.set_child(root)
@@ -86,8 +100,6 @@ class Window(Gtk.ApplicationWindow):
         sidebar.set_size_request(190, -1)
         root.append(sidebar)
         brand = box(False, 10)
-        icon = label('◈', 'accent')
-        brand.append(icon)
         brand.append(label('avelin', 'brand'))
         sidebar.append(brand)
         intro = label('A clearer view of your system', 'overline', True)
@@ -97,12 +109,13 @@ class Window(Gtk.ApplicationWindow):
         self.stack = Gtk.Stack()
         self.stack.set_hexpand(True)
         self.stack.set_vexpand(True)
-        self.stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
+        # Page changes do not depend on animation or a desktop motion setting.
+        self.stack.set_transition_type(Gtk.StackTransitionType.NONE)
         first = None
-        for key, name, builder in [('dashboard', 'Dashboard', self.dashboard), ('tune', 'Tune', self.tune), ('cleanup', 'Clean up', self.cleanup), ('system', 'System', self.system_page)]:
+        for key, name, builder in [('dashboard', 'Dashboard', self.dashboard), ('tune', 'Preferences', self.tune), ('cleanup', 'Clean up', self.cleanup), ('system', 'System', self.system_page)]:
             page = builder()
             scroll = Gtk.ScrolledWindow()
-            scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+            scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
             scroll.set_child(page)
             self.stack.add_named(scroll, key)
             nav = Gtk.ToggleButton(label=name)
@@ -147,15 +160,17 @@ class Window(Gtk.ApplicationWindow):
             value = label('—', 'metric-value')
             self.metric_labels[key] = value
             card.append(value)
-            card.append(label(description, 'muted'))
+            description_label = label(description, 'muted', True)
+            self.metric_descriptions[key] = (description_label, description)
+            card.append(description_label)
             row.append(card)
         p.append(row)
         graph_card = box(True, 10, 'card')
         head = box(False, 8)
         head.append(label('Recent activity', 'section-title'))
         head.append(spacer())
-        head.append(label('● CPU', 'cpu-key'))
-        head.append(label('● Memory', 'memory-key'))
+        head.append(label('Solid: CPU', 'cpu-key'))
+        head.append(label('Dashed: Memory', 'memory-key'))
         graph_card.append(head)
         graph_card.append(label('Last 2 minutes · sampled every 2 seconds · 0–100%', 'muted'))
         self.graph = Gtk.DrawingArea()
@@ -175,7 +190,8 @@ class Window(Gtk.ApplicationWindow):
             cr.move_to(0, (height - 2) * y + 1)
             cr.line_to(width, (height - 2) * y + 1)
             cr.stroke()
-        for values, color in ((self.cpu_history, (0.70, 0.90, 0.75)), (self.mem_history, (0.57, 0.70, 0.86))):
+        for values, color, dash in ((self.cpu_history, (0.70, 0.90, 0.75), ()), (self.mem_history, (0.57, 0.70, 0.86), (6, 4))):
+            cr.set_dash(dash)
             cr.set_source_rgb(*color)
             cr.set_line_width(2)
             started = False
@@ -197,28 +213,33 @@ class Window(Gtk.ApplicationWindow):
         cpu = system.cpu_percent(self.prev_cpu, now)
         self.prev_cpu = now
         mem, disk = system.memory(), system.disk()
-        self.metric_labels['cpu'].set_text('—' if cpu is None else f'{cpu:.0f}%')
-        self.metric_labels['memory'].set_text('—' if mem is None else f'{100 * mem[0] / mem[1]:.0f}%')
-        self.metric_labels['disk'].set_text('—' if disk is None else f'{100 * disk[0] / disk[1]:.0f}%')
+        values = {'cpu': cpu, 'memory': None if mem is None or mem[1] <= 0 else 100 * mem[0] / mem[1],
+                  'disk': None if disk is None or disk[1] <= 0 else 100 * disk[0] / disk[1]}
+        for key, value in values.items():
+            self.metric_labels[key].set_text('—' if value is None else f'{value:.0f}%')
+            description, base = self.metric_descriptions[key]
+            description.set_text(base + (' · unavailable' if value is None else ''))
         self.cpu_history.append(cpu)
-        self.mem_history.append(None if mem is None else 100 * mem[0] / mem[1])
+        self.mem_history.append(values['memory'])
         self.graph.queue_draw()
         return True
 
     def tune(self):
-        p = self.page('Adjustments', 'Preferences', 'Change a preference and switch it back whenever you like.')
+        p = self.page('Adjustments', 'Preferences', 'Review settings and their effects before making changes.')
         power = box(True, 10, 'card')
-        power.append(label('Power profile', 'section-title'))
-        power.append(label('Choose a profile offered by your system. Performance mode may use more power, generate heat and reduce battery life.', 'muted', True))
+        power_label = label('Power profile', 'section-title')
+        power.append(power_label)
+        power.append(label('The current power profile is system-wide. Changes are temporarily unavailable: changing a profile may cancel active holds requested by other applications, and switching back will not restore those holds. Performance mode may use more power, generate heat and reduce battery life.', 'muted', True))
         self.power_status = label('Checking power profiles…', 'muted', True)
         power.append(self.power_status)
         row = box(False, 8)
         self.power_choices = Gtk.DropDown.new_from_strings([])
         self.power_choices.set_hexpand(True)
-        self.power_choices.set_tooltip_text('Power profile')
+        self.power_choices.set_tooltip_text('Power profile changes are temporarily unavailable')
         self.power_choices.set_sensitive(False)
         self.power_apply = button('Apply…', 'secondary', self.confirm_power)
         self.power_apply.set_sensitive(False)
+        power_label.set_mnemonic_widget(self.power_choices)
         row.append(self.power_choices)
         row.append(self.power_apply)
         power.append(row)
@@ -237,17 +258,19 @@ class Window(Gtk.ApplicationWindow):
             row = box(False, 18, 'card')
             text = box(True, 6)
             text.set_hexpand(True)
-            text.append(label(item.title, 'section-title'))
+            setting_label = label(item.title, 'section-title', True)
+            text.append(setting_label)
             text.append(label(item.description, 'muted', True))
             row.append(text)
             switch = Gtk.Switch()
+            setting_label.set_mnemonic_widget(switch)
             state = actions.setting_state(item.key)
             switch.set_valign(Gtk.Align.CENTER)
             switch.set_tooltip_text(item.title + ('' if state is not None else ' — unavailable in this session'))
             switch.set_sensitive(state is not None)
             if state is not None:
                 switch.set_active(state)
-                switch.connect('state-set', self.on_setting, item.key)
+                self.setting_handlers[switch] = switch.connect('state-set', self.on_setting, item.key)
             else:
                 text.append(label('Unavailable on this desktop', 'muted'))
             row.append(switch)
@@ -265,27 +288,31 @@ class Window(Gtk.ApplicationWindow):
         threading.Thread(target=work, daemon=True).start()
 
     def show_power(self, profiles, current):
+        self.power_choices.set_sensitive(False)
+        self.power_apply.set_sensitive(False)
         self.power_ids = profiles
         names = {'power-saver': 'Power saver', 'balanced': 'Balanced', 'performance': 'Performance'}
         self.power_choices.set_model(Gtk.StringList.new([names[x] for x in profiles]))
         if current in profiles:
             self.power_choices.set_selected(profiles.index(current))
-            self.power_status.set_text('Current profile: ' + names[current])
-            self.power_choices.set_sensitive(True)
-            self.power_apply.set_sensitive(True)
+            self.power_status.set_text('Current profile: ' + names[current] + ' · Changes temporarily unavailable')
         else:
             self.power_status.set_text('Power profiles are unavailable on this system.')
         return False
 
     def confirm_power(self, _button):
+        # Fail closed while profile changes are temporarily unavailable.
+        if not self.power_apply.get_sensitive():
+            return
         index = self.power_choices.get_selected()
         if index >= len(self.power_ids):
             return
         profile = self.power_ids[index]
         dialog = Gtk.MessageDialog(transient_for=self, modal=True, message_type=Gtk.MessageType.QUESTION, buttons=Gtk.ButtonsType.NONE, text='Change power profile?')
-        dialog.set_property('secondary-text', 'Apply ' + profile + '? Performance mode may increase heat and power use. You can select another available profile to reverse this change.')
+        dialog.set_property('secondary-text', 'Apply ' + profile + ' system-wide? This affects the whole machine and may cancel active power-profile holds requested by other applications. Switching back will not restore those holds. Performance mode may increase heat and power use.')
         dialog.add_button('Cancel', Gtk.ResponseType.CANCEL)
         dialog.add_button('Apply', Gtk.ResponseType.ACCEPT)
+        dialog.set_default_response(Gtk.ResponseType.CANCEL)
         def response(d, result):
             d.destroy()
             if result != Gtk.ResponseType.ACCEPT:
@@ -303,19 +330,57 @@ class Window(Gtk.ApplicationWindow):
         dialog.present()
 
     def power_failed(self, message):
-        self.power_status.set_text('Could not change profile: ' + message)
-        self.power_apply.set_sensitive(bool(self.power_ids))
+        self.power_status.set_text('Could not change profile: ' + message + '. Power profile changes are temporarily unavailable.')
+        self.power_choices.set_sensitive(False)
+        self.power_apply.set_sensitive(False)
         return False
 
     def on_setting(self, switch, desired, key):
+        if switch in self.setting_pending:
+            return True
         try:
             actions.set_setting(key, desired)
             self.tune_feedback.set_text('Preference updated. Toggle it again to change it back.')
             switch.set_state(desired)
         except Exception as exc:
+            # Defer restoration until GTK finishes the outer state-set emission,
+            # including its accessible checked-state update.
+            self.setting_pending.add(switch)
+            switch.set_sensitive(False)
             self.tune_feedback.set_text('Could not update the preference: ' + str(exc))
-            switch.set_active(switch.get_state())
+            GLib.idle_add(self.finish_setting_failure, switch, key, str(exc))
         return True
+
+    def finish_setting_failure(self, switch, key, error):
+        try:
+            # A page/window may have been destroyed while the callback waited.
+            if switch.get_root() is not self:
+                return False
+            try:
+                actual = actions.setting_state(key)
+            except Exception:
+                actual = None
+            known = actual is not None
+            displayed = actual if known else switch.get_state()
+            handler = self.setting_handlers[switch]
+            switch.handler_block(handler)
+            try:
+                switch.set_state(displayed)
+                switch.set_active(displayed)
+            finally:
+                switch.handler_unblock(handler)
+            switch.set_sensitive(known)
+            message = 'Could not update the preference: ' + error
+            if not known:
+                message += '. Current state is unavailable; the control is disabled.'
+            self.tune_feedback.set_text(message)
+        except Exception:
+            switch.set_sensitive(False)
+            self.tune_feedback.set_text('Could not update the preference: ' + error +
+                                        '. Current state is unavailable; the control is disabled.')
+        finally:
+            self.setting_pending.discard(switch)
+        return False
 
     def cleanup(self):
         p = self.page('Storage care', 'Find space, safely', 'Start with a read-only scan. Review your files before deleting anything.')
@@ -330,18 +395,20 @@ class Window(Gtk.ApplicationWindow):
         self.scan_results = box(True, 10)
         self.scan_results.append(label('No scan run yet.', 'muted'))
         card.append(self.scan_results)
-        card.append(label('Sizes are approximate allocated file space, not reclaimable space. Inaccessible paths, other mounted filesystems, shared data and large scans can make results incomplete.', 'muted', True))
+        card.append(label('Sizes estimate allocated regular-file space, not reclaimable space. Partial results are subtotals; access errors, shared data and scan limits can affect them.', 'muted', True))
+        card.append(label('Entries on a different device are skipped. Same-device bind mounts may still be traversed, including outside the intended tree. Initial path prefixes may contain symbolic links.', 'muted', True))
         p.append(card)
         trash = box(True, 12, 'card')
         trash.append(label('Empty trash', 'section-title'))
         trash.append(label('Permanently removes trash from locations managed by your desktop, including supported mounted volumes. This cannot be undone. Check your trash first.', 'muted', True))
         row = box(False)
-        action = button('Empty trash…', 'danger', self.confirm_trash)
-        action.set_sensitive(shutil.which('gio') is not None)
-        row.append(action)
+        self.trash_button = button('Empty trash…', 'danger', self.confirm_trash)
+        trash_available = shutil.which('gio') is not None
+        self.trash_button.set_sensitive(trash_available)
+        row.append(self.trash_button)
         row.append(spacer())
         trash.append(row)
-        self.cleanup_feedback = label('Nothing has been removed.', 'muted', True)
+        self.cleanup_feedback = label('Nothing has been removed.' if trash_available else 'Empty trash is unavailable: gio is not installed.', 'muted', True)
         trash.append(self.cleanup_feedback)
         p.append(trash)
         p.append(label('No caches, logs, application data or packages are removed by the scan.', 'muted', True))
@@ -365,10 +432,12 @@ class Window(Gtk.ApplicationWindow):
             self.scan_results.remove(child)
         if error:
             self.scan_results.append(label('Scan failed: ' + error, 'muted', True))
+        if not error and not results:
+            self.scan_results.append(label('Scan complete. No locations were reported.', 'muted', True))
         for result in results:
             line = box(True, 3)
             size = system.bytes_label(result.allocated_bytes)
-            line.append(label(result.name + '  —  ' + size, 'section-title'))
+            line.append(label(result.name + '  —  ' + result.status.capitalize() + '  ·  ' + size, 'section-title', True))
             line.append(label(result.path + '  ·  ' + result.note, 'muted', True))
             self.scan_results.append(line)
         self.scan_button.set_sensitive(True)
@@ -387,15 +456,21 @@ class Window(Gtk.ApplicationWindow):
         dialog.destroy()
         if response != Gtk.ResponseType.ACCEPT:
             return
+        self.trash_button.set_sensitive(False)
         self.cleanup_feedback.set_text('Emptying trash…')
         def work():
             try:
                 actions.empty_trash()
-                result = 'Trash emptied. Some inaccessible items may remain.'
+                result = 'Trash cleanup requested. Verify your trash; some items may remain.'
             except Exception as exc:
                 result = 'Could not empty trash: ' + str(exc)
-            GLib.idle_add(self.cleanup_feedback.set_text, result)
+            GLib.idle_add(self.trash_finished, result)
         threading.Thread(target=work, daemon=True).start()
+
+    def trash_finished(self, result):
+        self.cleanup_feedback.set_text(result)
+        self.trash_button.set_sensitive(True)
+        return False
 
     def system_page(self):
         p = self.page('Device', 'Know your machine.', 'Detected locally. Some details depend on your hardware and installed utilities.')
@@ -439,6 +514,8 @@ class Window(Gtk.ApplicationWindow):
 def main():
     app = Gtk.Application(application_id='io.github.siradj00.avelin', flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
     def activate(application):
+        # The interface is deliberately dark; native controls should match its surfaces.
+        Gtk.Settings.get_default().set_property('gtk-application-prefer-dark-theme', True)
         provider = Gtk.CssProvider()
         provider.load_from_data(CSS)
         Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
