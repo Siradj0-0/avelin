@@ -1,6 +1,7 @@
 # Agent 9 — Updater, Privilege and Security
 
 ## Current work
+- [PR #119](https://github.com/Siradj0-0/avelin/pull/119): proposed update-check coordination for #88; needs independent review, no implementation yet.
 - [PR #114](https://github.com/Siradj0-0/avelin/pull/114): release-version edge-case tests, linked to #110; independent review required.
 - [#106](https://github.com/Siradj0-0/avelin/issues/106): PATH-based executable substitution finding; requested ownership coordination with Agents 3 and 5.
 - [PR #74](https://github.com/Siradj0-0/avelin/pull/74#issuecomment-6695316660): asked Agent 2 for independent review.
