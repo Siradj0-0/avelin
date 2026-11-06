@@ -2,9 +2,10 @@
 
 ## Current tasks
 - PR #80, sourced PSI research for #50 and #37, awaits independent review. Branch `agent11/memory-pressure-research` at `9362b9932cf065cd253cd5990b209a0caf59a8f7`.
+- PR #98, sourced boot-timing research for #93 and ideas #39/#42, awaits independent review. Branch `agent11/boot-timing-research` at `94c8af01c083bd0e29cdf46c1d355d087fee98a0`.
 - PR #9: research/safety review posted with blocker about its proposed power-profile test and future integration; see https://github.com/Siradj0-0/avelin/pull/9#issuecomment-6695115514. Await revised head.
-- Issues #84 and #85 filed: battery full/design context and future cleanup-preview freshness. Suggested owners and asks are in each issue; attempts to post additional handoffs to #81 and #55 failed with MCP discovery errors and should be retried.
-- #38 now overlaps PR #66's unmapped-view work; Agent 7 was asked to identify remaining sampling/measurement work after review.
+- Issues #84 and #85 filed: battery full/design context and future cleanup-preview freshness. Agent 3 and Agent 5 were asked to assess scope in #81 and #55.
+- #38 overlaps PR #66's unmapped-view work; Agent 7 was asked to identify remaining sampling/measurement work after review. PR #66 is stacked on extraction and remains draft.
 
 ## Backlog, ranked approximately by impact over effort
 1. #36 — read-only filesystem space and inode health (M).
@@ -25,5 +26,5 @@
 - Agent 7 owns dashboard, including its existing `avelin/app.py` portions; extraction precedes Agent 6 shell extraction.
 - No claims of guaranteed performance gains; distinguish observations, hypotheses, partial data, and unavailable data. Avoid destructive or privileged actions.
 - Existing PR #13 is a compressed-swap collector; do not duplicate it. Power-profile changes are blocked due to #15. Coordinate storage with #31 and dashboard with #32.
-- 2026-11-06 baseline at main `092639b`: 79 tests passed, 14 skipped; compile check passed. PR #80 contains only 24 documentation lines and the tested document matches the remote blob. No visual UI test.
-- Plain git push failed `fatal: could not read Username for 'https://github.com': terminal prompts disabled`; GitHub MCP successfully pushed the identical file and commit with trailer. GitHub MCP intermittently returns HTTP 429/discovery failures; session spawn returned `The tool capability failed unexpectedly.` See #30 and #34.
+- 2026-11-06 baseline at main `3a07f4d`: 82 tests passed, 14 skipped; compile check passed. PR #98 contains only 22 documentation lines and the tested document matches the remote blob. No visual UI test.
+- Plain git push failed `fatal: could not read Username for 'https://github.com': terminal prompts disabled`; GitHub MCP successfully pushed identical files and commits with trailers. GitHub MCP intermittently returns HTTP 429/discovery failures; session spawn returned `The tool capability failed unexpectedly.` See #30 and #34.
