@@ -31,6 +31,31 @@ class UpdateGuidanceTests(unittest.TestCase):
         self.assertEqual(update_guidance((InstallOrigin.SOURCE, InstallOrigin.SOURCE)).origin,
                          InstallOrigin.SOURCE)
 
+    def test_rejects_mapping_and_bounded_input(self):
+        self.assertEqual(update_guidance({InstallOrigin.PACKAGE: False}).origin, InstallOrigin.UNKNOWN)
+        self.assertEqual(update_guidance([InstallOrigin.PACKAGE] * 64).origin, InstallOrigin.PACKAGE)
+        self.assertEqual(update_guidance([InstallOrigin.PACKAGE] * 65).origin, InstallOrigin.UNKNOWN)
+
+    def test_generator_is_rejected_without_consumption(self):
+        def bad():
+            raise AssertionError('must not consume')
+            yield InstallOrigin.PACKAGE
+        self.assertEqual(update_guidance(bad()).origin, InstallOrigin.UNKNOWN)
+
+    def test_hash_bomb_rejected_before_hashing(self):
+        class HashBomb:
+            def __hash__(self):
+                raise AssertionError('must not hash non-enum')
+        for evidence in ((HashBomb(),), [InstallOrigin.PACKAGE, HashBomb()]):
+            self.assertEqual(update_guidance(evidence).origin, InstallOrigin.UNKNOWN)
+
+    def test_list_subclass_rejected_without_iteration(self):
+        class HostileList(list):
+            def __iter__(self):
+                raise AssertionError('must not iterate subclass')
+        self.assertEqual(update_guidance(HostileList([InstallOrigin.PACKAGE])).origin,
+                         InstallOrigin.UNKNOWN)
+
     def test_no_host_inspection_or_execution(self):
         with patch('subprocess.run', side_effect=AssertionError('process executed')), \
              patch('subprocess.Popen', side_effect=AssertionError('process executed')), \

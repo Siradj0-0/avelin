@@ -5,7 +5,6 @@ classification is not a proof of package ownership or artifact authenticity.
 """
 from dataclasses import dataclass
 from enum import Enum
-from typing import Iterable
 
 
 class InstallOrigin(Enum):
@@ -45,20 +44,16 @@ _GUIDANCE = {
 }
 
 
-def update_guidance(verified_origins: Iterable[InstallOrigin] = ()) -> Guidance:
-    """Select guidance from independently verified origins, conservatively.
+def update_guidance(verified_origins: tuple[InstallOrigin, ...] | list[InstallOrigin] = ()) -> Guidance:
+    """Select guidance from a bounded list or tuple of verified origins.
 
-    Only one distinct recognized origin produces specific guidance. Unknown,
-    malformed or conflicting evidence fails closed. This function does not
-    validate evidence, inspect the host, compare versions, or perform updates.
+    Other containers, malformed or conflicting values, and lists/tuples
+    longer than 64 return unknown. Evidence itself is not validated.
     """
-    try:
-        origins = set(verified_origins)
-    except (TypeError, ValueError):
-        origins = set()
-    if len(origins) != 1:
+    if (type(verified_origins) not in (tuple, list) or len(verified_origins) > 64
+            or not all(isinstance(item, InstallOrigin) for item in verified_origins)):
         origin = InstallOrigin.UNKNOWN
     else:
-        candidate = next(iter(origins))
-        origin = candidate if isinstance(candidate, InstallOrigin) else InstallOrigin.UNKNOWN
+        origins = set(verified_origins)
+        origin = next(iter(origins)) if len(origins) == 1 else InstallOrigin.UNKNOWN
     return Guidance(origin, _GUIDANCE[origin])
