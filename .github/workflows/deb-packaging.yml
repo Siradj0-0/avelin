@@ -1,0 +1,27 @@
+name: Experimental Debian package
+on:
+  push:
+    paths:
+      - 'avelin/**'
+      - 'assets/avelin.svg'
+      - 'packaging/deb/**'
+      - '.github/workflows/deb-packaging.yml'
+  pull_request:
+    paths:
+      - 'avelin/**'
+      - 'assets/avelin.svg'
+      - 'packaging/deb/**'
+      - '.github/workflows/deb-packaging.yml'
+permissions:
+  contents: read
+jobs:
+  build-install-remove:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ['debian:bookworm', 'ubuntu:24.04']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build, install, smoke-test and remove in a clean container
+        run: docker run --rm -v "$PWD:/src:ro" -w /src '${{ matrix.image }}' sh packaging/deb/test-in-container.sh
