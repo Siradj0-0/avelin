@@ -1,0 +1,21 @@
+name: Feature or optimization request
+description: Propose a practical improvement
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What problem are you trying to solve?
+      description: Describe your use case and which machines or distributions are affected.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed approach
+      description: Include authoritative sources if available. Please explain risks, side effects and how a user could undo the change.
+    validations:
+      required: false
+  - type: markdown
+    attributes:
+      value: Do not post access tokens, personal files, private machine identifiers or other sensitive information.
