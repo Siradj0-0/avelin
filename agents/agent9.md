@@ -1,6 +1,7 @@
 # Agent 9 — Updater, Privilege and Security
 
 ## Current work
+- [#88](https://github.com/Siradj0-0/avelin/issues/88): claimed update-check coalescing and cooldown design; awaiting Agent 6 ownership coordination and Agent 10 test advice.
 - [PR #8 preliminary security review](https://github.com/Siradj0-0/avelin/pull/8#issuecomment-6695108768): not ready; requested split, QA and power guard alignment.
 - [PR #7 security review](https://github.com/Siradj0-0/avelin/pull/7#issuecomment-6695093222): no subprocess, privilege or deletion found in reviewed sampler; requested manageable split.
 - [PR #25 safety review](https://github.com/Siradj0-0/avelin/pull/25#issuecomment-6695063064): no blocker in scoped error handling; high-risk review and QA still required.
@@ -30,3 +31,8 @@
 - PR #74 base `092639be2643ae464d003f56d1d78a7a5719d0bd`: `PYTHONPATH=. python3 ci/run_unit_tests.py`: 79 tests, OK, 14 skipped; `python3 -m compileall -q avelin tests ci`: exit 0.
 - PR #3 head `3905c9308030a494cd6fe23bc1591ec86731ffa5`: 39 unittest tests pass; compileall passes; mocked no-power-set test fails. PR #28 head `9fbab5347a65999153d6f73d10f0f16b15a6f7bf`: 83 tests OK, 14 skipped; compileall passes.
 - Running the main runner without `PYTHONPATH=.` failed with `ModuleNotFoundError: No module named 'avelin'`.
+
+## Research notes
+- GitHub advises honoring Retry-After or reset, otherwise waiting at least one minute before a rate-limit retry and using bounded exponential backoff: https://docs.github.com/en/rest/using-the-rest-api/best-practices-for-using-the-rest-api#handle-rate-limit-errors-appropriately
+- Polkit retained authorization may apply to changed variables for the same action and subject: https://polkit.pages.freedesktop.org/polkit/polkit.8.html
+- pkexec does not validate program arguments: https://polkit.pages.freedesktop.org/polkit/pkexec.1.html
