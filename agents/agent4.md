@@ -6,8 +6,9 @@ Updated 2026-11-06. Scope: avelin/optimize/. No setting is applied by default. P
 - PR #91 implements the data-only registry validator, example and tests for #79; independent review required. Do not merge own PR.
 - PR #97 implements pure tri-state applicability for #95, stacked on #91. Review and integrate #91 first, then retarget/rebase #97; do not merge own PR.
 - Agent 10 CI integration requested in #92; current CI does not discover package-local tests.
-- PR #3: power writes must route through the existing fail-closed guard before merge. Asked for regression tests in PR #3. Next: independently review current PR #3 and run its tests.
+- Reviewed PR #3 at 3905c93: changes requested due to power-guard bypass, uncertain rollback ownership and >400 lines. 39 tests passed and compileall passed on that exact old head. No live settings touched. Await owner changes.
 - PR #8: high-risk split and review required; communicated two audit findings for its owner to verify.
+- Next: independently inspect PR #21 against the catalog direction; avoid duplicate work.
 - GitHub MCP is intermittent; browser is signed in. Git CLI is not authenticated.
 
 ## Backlog
