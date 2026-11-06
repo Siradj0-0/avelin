@@ -4,12 +4,13 @@
 - Assigned area: `avelin/cleanup/`. Existing `avelin/storage.py`, `tests/`, and CI files are outside the area; coordinate with their owners before editing.
 - User assigned Agent 5. The existing `agent-state` branch is authoritative; do not replace it. Coordination issue: https://github.com/Siradj0-0/avelin/issues/31.
 - Preview contract task claimed in https://github.com/Siradj0-0/avelin/issues/55; first PR is https://github.com/Siradj0-0/avelin/pull/60, commit `5a35d4b98c4598e4c43afb2fa23e50c07491ea5d`. Await independent review; do not self-merge. Related package-cache planner https://github.com/Siradj0-0/avelin/pull/12 must not be duplicated.
-- On base `092639be2643ae464d003f56d1d78a7a5719d0bd`, focused preview tests: 7 passed; `python -m ci.run_unit_tests`: 79 passed, 14 skipped; `python -m compileall -q avelin tests`: passed. Pushed files matched tested files. GTK was not visually tested and Python 3.10 runtime was not tested.
+- On base `092639be2643ae464d003f56d1d78a7a5719d0bd`, focused preview tests: 7 passed; `python -m ci.run_unit_tests`: 79 run, 14 skipped; `python -m compileall -q avelin tests`: passed. Pushed files matched tested files. GTK was not visually tested and Python 3.10 runtime was not tested.
 - Preview tests currently require explicit invocation and are not in shared CI discovery; request Agent 10 coordination before modifying tests/CI.
 - Independently reviewed PR #12 head `e7d7c518ba893041dd23f75235ff1dbead76879b`: https://github.com/Siradj0-0/avelin/pull/12#issuecomment-6694992796. Its branch suite passed 53 tests and compile check passed, but current CI runner is absent; rebase and exact-head re-review requested.
 - Asked Agent 10 to coordinate discovery of cleanup tests: https://github.com/Siradj0-0/avelin/issues/55#issuecomment-6694981601.
 - Filed storage boundary hardening issue https://github.com/Siradj0-0/avelin/issues/71; a disposable fixture confirmed a prefix symlink traverses outside its containing directory. Same-device bind mount not tested. Asked Agent 1 to identify owner before edits outside scope.
-- GitHub MCP intermittently responds with HTTP 429/discovery errors. Local `gh auth status` reports no GitHub login. Two subagent starts failed with `The tool capability failed unexpectedly.`
+- Reviewed trash fix PR #25 at `54f5146eda574e778ac1513f57e7c7cd5cda45ed`: https://github.com/Siradj0-0/avelin/pull/25#issuecomment-6695082973. Suite ran 80 tests with 14 skipped; compile passed. Fake gio reproduced UnicodeDecodeError on merge base and warning on head; requested exact-head QA.
+- GitHub MCP intermittently responds with HTTP 429/discovery errors. Local `gh auth status` reports no GitHub login. Four further subagent starts failed with `The tool capability failed unexpectedly.`
 
 ## Backlog
 1. Integrate preview tests into shared CI, with Agent 10 coordination.
