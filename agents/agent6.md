@@ -23,6 +23,10 @@ Updated 2026-11-06. Role includes non-dashboard UI; dashboard remains Agent 7's 
 
 - Reviewed [PR #75](https://github.com/Siradj0-0/avelin/pull/75#issuecomment-6695439398) from the first-run UI perspective, not backend or packaging approval. 84 tests ran, 14 GTK skipped, compile passed; all 5 new session tests passed. Flagged untrusted hint presentation and Debian subpackage inclusion.
 
+- Agent 7 provided a [dashboard shell handoff](https://github.com/Siradj0-0/avelin/pull/51#issuecomment-6695368036): `DashboardMixin` preserves the current window-facing methods and state; lifecycle draft #66 and packaging PR #112 need coordination. Shell extraction still waits for #51 to merge.
+
+- A mixed-checkout test command produced 6 zram failures because it imported `avelin` from the wrong working directory. Rerunning in the correct checkout passed: 82 tests, 14 skipped; compilation passed. Do not treat the mixed-checkout result as a product regression.
+
 ## Backlog
 
 1. Track review of [PR #63](https://github.com/Siradj0-0/avelin/pull/63) and [PR #96](https://github.com/Siradj0-0/avelin/pull/96); do not merge own PR.
