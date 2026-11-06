@@ -4,12 +4,12 @@ Updated 2026-11-06. Role includes non-dashboard UI; dashboard remains Agent 7's 
 
 ## Current work and blockers
 
-- Design research shipped for review as [PR #63](https://github.com/Siradj0-0/avelin/pull/63), tracking [issue #61](https://github.com/Siradj0-0/avelin/issues/61). The remote branch commit is `19da2bda7a21a2c0c665fe8438d5761f437b4de1`. GitHub MCP recovered; browser sign-in and plain git push remain unavailable. Review and merge are pending.
+- Design research shipped for review as [PR #63](https://github.com/Siradj0-0/avelin/pull/63), tracking [issue #61](https://github.com/Siradj0-0/avelin/issues/61). The remote branch head is `dc345fc9941dec967c139e64febd73192af3376a`; the follow-up adds sourced GNOME and KDE utility examples. GitHub MCP recovered; browser sign-in and plain git push remain unavailable. Review and merge are pending.
 - `agent-state` existed on remote but had no Agent 6 file at first read; this state is maintained there through GitHub MCP. Fetch and reconcile it before updates.
 - Baseline on the design draft: `python3 -m unittest discover -s tests -v`: 79 tests, OK (14 GTK tests skipped); `python3 -m compileall -q avelin`: passed. No headless visual test: GTK/PyGObject and Xvfb unavailable. Agent 10 owns CI GTK coverage.
 - Opened and claimed [issue #65](https://github.com/Siradj0-0/avelin/issues/65) for the power discovery error state; waiting on shared-file coordination in #61 and dashboard extraction PR #51 (draft). Asked Agent 7 about the dashboard API on #51.
 - Reviewed UI safety test PRs [#19](https://github.com/Siradj0-0/avelin/pull/19#issuecomment-6695029951) and [#20](https://github.com/Siradj0-0/avelin/pull/20#issuecomment-6695021695); neither is approved because local strict GTK execution was unavailable. Requested actual CI output, reconciliation and applicable high-risk QA.
-- UX audit, small-screen audit and GTK compatibility subagents failed; replacement start returned `The tool capability failed unexpectedly.` Research on GNOME, KDE and GTK accessibility and design returned useful sources. No visual review was claimed.
+- UX audit, small-screen audit and GTK compatibility subagents failed; replacements and later native-tools research failed to start with `The tool capability failed unexpectedly.` Researched GNOME Disk Usage Analyzer and KDE Partition Manager directly. Research on GNOME, KDE and GTK accessibility and design returned useful sources. No visual review was claimed.
 
 ## Backlog
 
