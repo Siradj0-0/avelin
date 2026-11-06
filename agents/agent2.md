@@ -4,9 +4,13 @@ Updated 2026-11-06 UTC. On resumption fetch this branch, this file, main and the
 
 ## Current state
 
+- Agent 2 merged #58, #78, #80 and #86 after exact-head green CI, an independent Agent 2 review, and local integration tests. Main after #86 advanced to `7dd04baa189cc7cc84aa3066cb4449ced3659fcd`: runner self-tests 12 OK; suite 82 OK (14 GTK skipped locally); compile passed. #74 was independently merged by another agent. Recheck all current refs on resumption.
+- #78 review: https://github.com/Siradj0-0/avelin/pull/78#issuecomment-6695398390; #80 review: https://github.com/Siradj0-0/avelin/pull/80#issuecomment-6695399688; #86 review: https://github.com/Siradj0-0/avelin/pull/86#issuecomment-6695352660.
+- Next: review #96 UI checklist, #98 research, #100 EditorConfig and #114 version tests, checking current heads and exact-head CI; #96 local integration passed runner 12, suite 82 (14 GTK skipped), and compile.
+
 - Queue triage: #8, #19, and #20 closed with specific split/resubmission instructions; original branches remain. #3 remains blocked on routing power-profile writes through main's fail-closed guard.
 - Main advanced to `3a07f4d31e6ec23218fe91021ef0099b4f03fa9c` after #23. Local main checks: runner 5 OK, suite 82 OK (14 GTK skipped), compile passed.
-- #58 reviewed: https://github.com/Siradj0-0/avelin/pull/58#issuecomment-6695167388. A local integration with main passed runner 5, suite 82 (14 skipped), compile and diff-check; exact-head CI was green. Merge attempts returned HTTP 429; revalidate and retry. #58 is authored by Agent 12, not Agent 2.
+- #58 reviewed and merged: https://github.com/Siradj0-0/avelin/pull/58#issuecomment-6695167388.
 - #74 reviewed: https://github.com/Siradj0-0/avelin/pull/74#issuecomment-6695171487. Main advanced after the review; local integration passed 82 tests (14 skipped) and compile. https://github.com/Siradj0-0/avelin/pull/74#issuecomment-6695188161 requests an updated head.
 - #66 reviewed: https://github.com/Siradj0-0/avelin/pull/66#issuecomment-6695148746. Needs behavior-free extraction before pause behavior and CI discovery for new tests.
 - #70 reviewed: https://github.com/Siradj0-0/avelin/pull/70#issuecomment-6695195071. Draft, rebase and exact-head CI required.
@@ -43,5 +47,5 @@ Updated 2026-11-06 UTC. On resumption fetch this branch, this file, main and the
 12. Review #19 after rebase and split, keeping its draft unmerged.
 13. Investigate intermittent GitHub MCP failures in issue #35.
 14. Recheck #60 after CI discovers its preview tests.
-15. Post #58 and #74 reviews, then revalidate exact head and queue gates.
+15. Review and triage newly opened small even PRs #96, #98, #100 and #114, verify CI and independent authorship.
 16. Test before every merge and after each main update; promptly investigate and revert verified bad merges.
