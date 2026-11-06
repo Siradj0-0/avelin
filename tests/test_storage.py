@@ -64,10 +64,11 @@ class PowerTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 actions.set_power_profile('performance')
 
-    def test_set_and_verify(self):
-        with patch('avelin.actions.power_profiles', side_effect=[(['balanced','performance'],'balanced'), (['balanced','performance'],'performance')]), patch('avelin.actions.subprocess.run') as run:
-            actions.set_power_profile('performance')
-            self.assertEqual(run.call_args.args[0], ['powerprofilesctl', 'set', 'performance'])
+    def test_changing_profile_is_blocked(self):
+        with patch('avelin.actions.power_profiles', return_value=(['balanced', 'performance'], 'balanced')), patch('avelin.actions.subprocess.run') as run:
+            with self.assertRaisesRegex(RuntimeError, 'temporarily disabled'):
+                actions.set_power_profile('performance')
+            run.assert_not_called()
 
 
 class StorageSafetyTests(unittest.TestCase):
