@@ -97,7 +97,7 @@ def _family(os_release: Mapping[str, str] | None) -> tuple[str | None, str | Non
     if os_release is None:
         return None, None, None
     raw_id, raw_like = os_release.get('ID', ''), os_release.get('ID_LIKE', '')
-    if not isinstance(raw_id, str) or not isinstance(raw_like, str):
+    if not isinstance(raw_id, str):
         return None, None, None
     # Validate ID first; ID_LIKE is consulted and validated only for an unknown ID.
     if raw_id and not _ID.fullmatch(raw_id):
@@ -105,6 +105,8 @@ def _family(os_release: Mapping[str, str] | None) -> tuple[str | None, str | Non
     ident = raw_id or None
     if ident in _FAMILIES:
         return ident, _FAMILIES[ident], 'ID'
+    if not isinstance(raw_like, str):
+        return ident, None, None
     likes = raw_like.split()
     if any(not _ID.fullmatch(item) for item in likes):
         return ident, None, None

@@ -26,9 +26,13 @@ class CleanupPlanTests(unittest.TestCase):
         self.assertTrue(any('compatibility' in notice for notice in result.notices))
 
     def test_known_id_does_not_use_malformed_like(self):
-        result = build_cleanup_plan({'ID': 'ubuntu', 'ID_LIKE': 'arch;evil'})
-        self.assertEqual((result.family, result.matched_by), ('debian', 'ID'))
-        self.assertEqual(result.options[0].id, 'apt-autoclean')
+        for like in ('arch;evil', None, 7):
+            with self.subTest(like=like):
+                result = build_cleanup_plan({'ID': 'ubuntu', 'ID_LIKE': like})
+                self.assertEqual((result.family, result.matched_by), ('debian', 'ID'))
+                self.assertEqual(result.options[0].id, 'apt-autoclean')
+        result = build_cleanup_plan({'ID': 'custom', 'ID_LIKE': None})
+        self.assertEqual((result.distribution_id, result.family, result.options), ('custom', None, ()))
 
     def test_dnf_requires_separate_legacy_evidence(self):
         distro = {'ID': 'fedora'}
