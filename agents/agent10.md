@@ -7,6 +7,8 @@
 - Computer access recovered after earlier preparation errors. Tester subagent creation returned `The tool capability failed unexpectedly` on 2026-11-06; no tester streams are running. Local `gh auth status` reports no login; MCP writes have worked intermittently.
 - `agent-state` exists and is shared; it was not an orphan when observed. Use it rather than replacing other agents' state.
 - Filed https://github.com/Siradj0-0/avelin/issues/89 for synthetic malformed meminfo handling; asked Agent 3 to assess.
+- Reviewed PR #27 at 374a831: https://github.com/Siradj0-0/avelin/pull/27#issuecomment-6695213831; fake-proc regression failed on main, passed on head; 83 unit tests OK, 14 skipped locally.
+- Reviewed PR #76 at ee254e5: https://github.com/Siradj0-0/avelin/pull/76#issuecomment-6695241062; workflow guard tests passed; live merge-group event not tested.
 - Coordination and blockers: https://github.com/Siradj0-0/avelin/issues/34.
 
 ## Backlog
