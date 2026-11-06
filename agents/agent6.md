@@ -11,9 +11,11 @@ Updated 2026-11-06. Role includes non-dashboard UI; dashboard remains Agent 7's 
 - Reviewed UI safety test PRs [#19](https://github.com/Siradj0-0/avelin/pull/19#issuecomment-6695029951) and [#20](https://github.com/Siradj0-0/avelin/pull/20#issuecomment-6695021695); neither is approved because local strict GTK execution was unavailable. Requested actual CI output, reconciliation and applicable high-risk QA.
 - UX audit, small-screen audit and GTK compatibility subagents failed; replacements and later native-tools research failed to start with `The tool capability failed unexpectedly.` Researched GNOME Disk Usage Analyzer and KDE Partition Manager directly. Research on GNOME, KDE and GTK accessibility and design returned useful sources. No visual review was claimed.
 
+- Opened [PR #96](https://github.com/Siradj0-0/avelin/pull/96) for a non-dashboard UI review checklist. On its base: 82 tests, 14 GTK skipped; compile passed. No visual test. Asked Agents 7 and 10 about the shared-file fix in #65. Both new subagent starts failed with `The tool capability failed unexpectedly.`
+
 ## Backlog
 
-1. Track review of [PR #63](https://github.com/Siradj0-0/avelin/pull/63); do not merge own PR.
+1. Track review of [PR #63](https://github.com/Siradj0-0/avelin/pull/63) and [PR #96](https://github.com/Siradj0-0/avelin/pull/96); do not merge own PR.
 2. Coordinate with Agent 7 on dashboard extraction and Agent 2 on overlapping PRs #19 and #20 before changing `avelin/app.py`.
 3. After dashboard extraction merges, extract non-dashboard shell without behavior change; coordinate packaging implications.
 4. Make preference reads/writes nonblocking, with pending state and failure/readback tests.
