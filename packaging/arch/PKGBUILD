@@ -1,0 +1,27 @@
+# Experimental local package, pinned to a source snapshot; not an official release.
+pkgname=avelin-experimental
+pkgver=0.1.0.r9.gf9fa6a3
+pkgrel=1
+pkgdesc='Experimental GTK system information and settings companion'
+arch=('any')
+url='https://github.com/Siradj0-0/avelin'
+license=('MIT')
+depends=('python>=3.10' 'python-gobject' 'python-cairo' 'gtk4' 'glib2')
+optdepends=('pciutils: PCI graphics details'
+            'power-profiles-daemon: power profile information')
+_commit=f9fa6a3a69902f1aab9f62a37df953ffa786d4b7
+source=("avelin-${_commit}.tar.gz::https://codeload.github.com/Siradj0-0/avelin/tar.gz/${_commit}")
+sha256sums=('2e1e573d473da451cfa48082227fc745e60f62a49a1814d8e9ac034bb4961ef8')
+
+package() {
+    cd "$srcdir/avelin-${_commit}" || return 1
+    install -d "$pkgdir/usr/lib/avelin/avelin"
+    install -m 644 avelin/*.py "$pkgdir/usr/lib/avelin/avelin/"
+    install -Dm644 packaging/deb/launcher.py "$pkgdir/usr/lib/avelin/launcher.py"
+    install -Dm755 packaging/deb/avelin "$pkgdir/usr/bin/avelin"
+    install -Dm644 packaging/deb/io.github.siradj00.avelin.desktop \
+        "$pkgdir/usr/share/applications/io.github.siradj00.avelin.desktop"
+    install -Dm644 assets/avelin.svg \
+        "$pkgdir/usr/share/icons/hicolor/scalable/apps/io.github.siradj00.avelin.svg"
+    install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
