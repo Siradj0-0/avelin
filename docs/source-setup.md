@@ -39,17 +39,21 @@ The version must be at least 3.10. If you already have a checkout, use it instea
 
 ## Tests
 
-From the checkout root, run the unit tests and compile check (these do not require a graphical display):
+From the checkout root, run the same unit-job checks as CI (they do not require a graphical display):
 
 ```sh
-/usr/bin/python3 -m unittest discover -s tests -v
+/usr/bin/python3 -m unittest ci.test_run_unit_tests -v
+/usr/bin/python3 -m ci.run_unit_tests
 /usr/bin/python3 -m compileall -q avelin
 ```
 
-For a GTK window smoke test on Debian/Ubuntu, additionally install `xvfb` and `xauth`, then run:
+The runner checks that project tests were discovered; its self-tests verify that guard. Some GTK tests can be skipped without GTK or a display: a passing unit run alone does not show that those tests ran. Check the output for skips.
+
+For the GTK smoke and strict accessibility checks on Debian/Ubuntu, additionally install `xvfb` and `xauth`, then run:
 
 ```sh
 xvfb-run -a /usr/bin/python3 -m tests.gui_smoke
+AVELIN_REQUIRE_GTK=1 xvfb-run -a /usr/bin/python3 -m unittest tests.test_ui_accessibility -v
 ```
 
-This opens and closes the app under a virtual display and checks that its main pages exist. It does not replace testing on a real desktop. When reporting a problem, include the distribution/version, desktop, Python version, the command and sanitized error output; remove usernames, paths, tokens and other private information first. See [contributing](../CONTRIBUTING.md).
+Strict mode makes missing GTK or display prerequisites fail instead of silently skipping the accessibility tests. The smoke test opens and closes the app under a virtual display and checks that its main pages exist. Neither check replaces testing on a real desktop. When reporting a problem, include the distribution/version, desktop, Python version, the command and sanitized error output; remove usernames, paths, tokens and other private information first. See [contributing](../CONTRIBUTING.md).
