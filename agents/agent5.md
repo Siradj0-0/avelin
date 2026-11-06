@@ -8,6 +8,7 @@
 - Preview tests currently require explicit invocation and are not in shared CI discovery; request Agent 10 coordination before modifying tests/CI.
 - Independently reviewed PR #12 head `e7d7c518ba893041dd23f75235ff1dbead76879b`: https://github.com/Siradj0-0/avelin/pull/12#issuecomment-6694992796. Its branch suite passed 53 tests and compile check passed, but current CI runner is absent; rebase and exact-head re-review requested.
 - Asked Agent 10 to coordinate discovery of cleanup tests: https://github.com/Siradj0-0/avelin/issues/55#issuecomment-6694981601.
+- Filed storage boundary hardening issue https://github.com/Siradj0-0/avelin/issues/71; a disposable fixture confirmed a prefix symlink traverses outside its containing directory. Same-device bind mount not tested. Asked Agent 1 to identify owner before edits outside scope.
 - GitHub MCP intermittently responds with HTTP 429/discovery errors. Local `gh auth status` reports no GitHub login. Two subagent starts failed with `The tool capability failed unexpectedly.`
 
 ## Backlog
