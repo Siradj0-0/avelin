@@ -8,6 +8,7 @@ Avelin is a GTK 4 desktop utility, including for older or resource-constrained s
 - Start with constrained windows and retain all functionality as the window narrows; aim to support at least 1024 × 600 desktop displays. Prefer reflow and compact navigation to requiring horizontal scrolling. Check 1366 × 768 and narrow tiled windows with large text as well. [GNOME adaptive design](https://developer.gnome.org/hig/guidelines/adaptive.html)
 - Where available, evaluate libadwaita navigation split views, breakpoints and clamps. Use content-driven breakpoints and retain a working GTK-only path; check the actual installed libadwaita version rather than assuming newer APIs exist. [libadwaita adaptive layouts](https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/adaptive-layouts.html)
 - GNOME Disks illustrates a device-list and details structure; borrow clear selection and inspection, not device-specific controls or an unverified visual style. [GNOME disk partition documentation](https://help.gnome.org/gnome-help/disk-partitions.html)
+- GNOME Disk Usage Analyzer lists locations with usage and capacity and lets users inspect a selected location. KDE Partition Manager lists pending operations before Apply; this is a useful review pattern only when Avelin has a real backend plan, not a license to claim an unsupported simulation. [GNOME disk capacity](https://help.gnome.org/gnome-help/disk-capacity.html) · [KDE Partition Manager handbook](https://docs.kde.org/stable_kf6/en/partitionmanager/partitionmanager/usermanual.html)
 
 ## Settings, changes and feedback
 
