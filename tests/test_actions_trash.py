@@ -14,6 +14,15 @@ class EmptyTrashFailureTests(unittest.TestCase):
                 actions.empty_trash()
             run.assert_not_called()
 
+    def test_gio_removed_after_preflight_fails_without_retry(self):
+        failure = FileNotFoundError('gio disappeared before launch')
+        with patch('avelin.actions.shutil.which', return_value='/usr/bin/gio'), \
+             patch('avelin.actions.subprocess.run', side_effect=failure) as run:
+            with self.assertRaises(FileNotFoundError) as raised:
+                actions.empty_trash()
+        self.assertIs(raised.exception, failure)
+        run.assert_called_once()
+
     def test_timeout_warns_about_possible_partial_deletion(self):
         failure = subprocess.TimeoutExpired(['gio', 'trash', '--empty'], 180)
         with patch('avelin.actions.shutil.which', return_value='/usr/bin/gio'), \
