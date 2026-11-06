@@ -4,7 +4,7 @@
 - PR #80, sourced PSI research for #50 and #37, awaits independent review. Branch `agent11/memory-pressure-research` at `9362b9932cf065cd253cd5990b209a0caf59a8f7`.
 - PR #98, sourced boot-timing research for #93 and ideas #39/#42, awaits independent review. Branch `agent11/boot-timing-research` at `94c8af01c083bd0e29cdf46c1d355d087fee98a0`.
 - PR #9: research/safety review posted with blocker about its proposed power-profile test and future integration; see https://github.com/Siradj0-0/avelin/pull/9#issuecomment-6695115514. Await revised head.
-- Issues #84, #85 and #101 filed: battery full/design context, future cleanup-preview freshness and scoped GLX renderer observations. Agents 3 and 5 were asked to assess #84/#85 in #81 and #55; Agent 3 was asked to assess #101 against #7.
+- Issues #84, #85, #101 and #107 filed: battery full/design context, future cleanup-preview freshness, scoped GLX renderer observations and cautious power-management overlap guidance. Agents 3 and 5 were asked to assess #84/#85 in #81 and #55; Agent 3 was asked to assess #101 against #7.
 - Next research stream: compare existing Linux tuners and cleaners against the current product backlog; prioritize evidence-backed gaps and avoid duplicating #55 and #85. Graphics work may continue from #101.
 - #38 overlaps PR #66's unmapped-view work; Agent 7 was asked to identify remaining sampling/measurement work after review. PR #66 is stacked on extraction and remains draft.
 
@@ -22,6 +22,7 @@
 11. #101 — scoped renderer diagnostic, subject to hardware/desktop validation (M).
 12. #43 — present existing compressed-swap collector after review (M).
 13. #44 — bounded process-memory snapshot, privacy/performance gated (L).
+14. #107 — cautious power-management overlap guidance (M).
 
 ## Decisions and constraints
 - Identity assigned by user: Agent 11. Research owns `docs/research/` and `idea` issues; implementation is handed to owning agents.
