@@ -8,7 +8,7 @@ def entry():
     return {
         'id': 'gnome.animations',
         'description': 'Disable interface animations.',
-        'source': 'https://gitlab.gnome.org/GNOME/gsettings-desktop-schemas/-/blob/main/schemas/org.gnome.desktop.interface.gschema.xml.in',
+        'source': 'https://gitlab.gnome.org/GNOME/gsettings-desktop-schemas/-/raw/main/schemas/org.gnome.desktop.interface.gschema.xml.in',
         'risk': 'low',
         'advanced': False,
         'reversible': True,

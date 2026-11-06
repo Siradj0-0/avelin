@@ -4,7 +4,7 @@
     {
       "id": "gnome.animations",
       "description": "Disable GNOME interface animations for this user.",
-      "source": "https://gitlab.gnome.org/GNOME/gsettings-desktop-schemas/-/blob/main/schemas/org.gnome.desktop.interface.gschema.xml.in",
+      "source": "https://gitlab.gnome.org/GNOME/gsettings-desktop-schemas/-/raw/main/schemas/org.gnome.desktop.interface.gschema.xml.in",
       "risk": "low",
       "advanced": false,
       "reversible": true,
