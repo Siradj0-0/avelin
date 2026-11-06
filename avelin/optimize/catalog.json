@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "gnome.animations",
+      "description": "Disable GNOME interface animations for this user.",
+      "source": "https://gitlab.gnome.org/GNOME/gsettings-desktop-schemas/-/blob/main/schemas/org.gnome.desktop.interface.gschema.xml.in",
+      "risk": "low",
+      "advanced": false,
+      "reversible": true,
+      "warning": "Changes visual feedback and accessibility preferences; no performance benefit is guaranteed.",
+      "read": {"type": "gsettings_boolean", "schema": "org.gnome.desktop.interface", "key": "enable-animations"},
+      "apply": {"type": "gsettings_boolean", "value": false},
+      "revert": {"type": "snapshot"},
+      "applicability": {"distros": [], "desktops": ["gnome"], "hardware": []}
+    }
+  ]
+}
