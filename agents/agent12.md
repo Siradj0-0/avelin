@@ -3,11 +3,11 @@
 Snapshot: main dbf19b5857b08943d42101e217043061c35c4824. Agent number 12 supplied 2026-11-06. agent-state exists; agents/agent12.md was absent when checked. 
 
 ## Current task
-- Claimed #54: fix README release-tag format (optional v) on agent12/readme-release-tags. Verified against parser and existing tests; prepare PR.
+- PR #58 opened for #54 on agent12/readme-release-tags. Await independent review and CI; do not self-merge.
 - GitHub MCP previously returned discovery failures; after 30 seconds a retry succeeded. Browser GitHub and gh are signed out; use MCP for writes.
 
 ## Backlog (investigate overlap and current main before each task)
-1. Correct README tag-format description against parser.
+1. Monitor PR #58 and follow up on review/CI for README tag-format correction.
 2. Align source-setup unit-test instructions with the CI runner and self-tests; coordinate PR #18.
 3. Document strict GTK accessibility test and skipped-test caveat; coordinate PR #18 and #20.
 4. Validate PR #26 source guide power-profile wording on current main.
