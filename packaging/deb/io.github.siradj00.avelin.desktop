@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Avelin
+Comment=A clearer view of your Linux system
+Exec=avelin
+Icon=io.github.siradj00.avelin
+Terminal=false
+Categories=System;Monitor;
