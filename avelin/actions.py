@@ -50,7 +50,18 @@ def set_setting(key: str, enabled: bool) -> None:
 def empty_trash() -> None:
     if not shutil.which('gio'):
         raise RuntimeError('The gio command is not installed')
-    subprocess.run(['gio', 'trash', '--empty'], check=True, timeout=180, capture_output=True, text=True)
+    try:
+        subprocess.run(['gio', 'trash', '--empty'], check=True, timeout=180, capture_output=True, text=True)
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(
+            'Emptying trash timed out. Some files may already have been permanently deleted; '
+            'check the trash before taking further action.'
+        ) from exc
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError(
+            'gio reported an error while emptying trash. Some files may already have been '
+            'permanently deleted; check the trash before taking further action.'
+        ) from exc
 
 POWER_PROFILES = frozenset(('power-saver', 'balanced', 'performance'))
 
@@ -76,9 +87,16 @@ def power_profiles() -> tuple[list[str], str | None]:
 def set_power_profile(profile: str) -> None:
     if profile not in POWER_PROFILES:
         raise ValueError('Power profile is not allowlisted')
-    available, _ = power_profiles()
+    available, current = power_profiles()
     if profile not in available:
         raise RuntimeError('Power profile is unavailable')
-    subprocess.run(['powerprofilesctl', 'set', profile], capture_output=True, text=True, timeout=20, check=True)
-    if power_profiles()[1] != profile:
-        raise RuntimeError('Could not verify the power profile')
+    if profile == current:
+        # Do not write even the same value: no manual change is needed.
+        return
+    # A separate ActiveProfileHolds check cannot rule out a hold acquired
+    # before a subsequent set, and switching back cannot restore another
+    # application's hold. Until that risk is addressed, do not issue a set.
+    raise RuntimeError(
+        'Changing power profiles is temporarily disabled: switching can cancel '
+        "another application's profile hold, which switching back cannot restore."
+    )

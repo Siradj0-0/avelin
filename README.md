@@ -12,7 +12,7 @@ A little more clarity for your Linux machine. Avelin is an early-stage **native 
 
 - Detects distribution, desktop, CPU, PCI graphics devices (when `lspci` is present), RAM, root filesystem capacity and active zram swap when readable.
 - Dashboard samples CPU and RAM every two seconds and graphs an in-memory history; root storage is capacity used, not disk I/O. Unavailable readings are not reported as zero.
-- Optional power-profile selection, when `powerprofilesctl` and its service offer supported profiles. The change is system-wide; a confirmation explains battery and heat tradeoffs.
+- Power-profile discovery when `powerprofilesctl` and its service are available. Changing profiles through Avelin is temporarily disabled: switching can cancel another application’s profile hold, which switching back cannot restore. Selecting the already-current profile does not write a change.
 - Seven reversible, allowlisted GNOME user preferences, including animations, hot corner, clock, battery display and cursor blinking. These are not all performance optimizations; unsupported settings are disabled.
 - An on-demand, read-only scan estimates allocated space in common cache, home trash, APT archive, system journal and user Flatpak locations. It marks incomplete scans, skips symlink entries and different-device entries, and does not equate size with reclaimable space. Initial path prefixes may contain symlinks and same-device bind mounts may be traversed. It never removes scan results.
 - **Empty trash** is a separate, manually confirmed action. It permanently removes trash from locations managed by your desktop, including supported mounted volumes. Check the contents and your backups first.
