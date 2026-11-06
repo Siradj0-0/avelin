@@ -91,6 +91,8 @@ class Window(Gtk.ApplicationWindow):
         self.mem_history = deque(maxlen=60)
         self.metric_labels = {}
         self.metric_descriptions = {}
+        self.setting_handlers = {}
+        self.setting_pending = set()
         self.update_label = None
         root = box(False)
         self.set_child(root)
@@ -211,29 +213,29 @@ class Window(Gtk.ApplicationWindow):
         cpu = system.cpu_percent(self.prev_cpu, now)
         self.prev_cpu = now
         mem, disk = system.memory(), system.disk()
-        values = {'cpu': cpu, 'memory': None if mem is None else 100 * mem[0] / mem[1],
-                  'disk': None if disk is None else 100 * disk[0] / disk[1]}
+        values = {'cpu': cpu, 'memory': None if mem is None or mem[1] <= 0 else 100 * mem[0] / mem[1],
+                  'disk': None if disk is None or disk[1] <= 0 else 100 * disk[0] / disk[1]}
         for key, value in values.items():
             self.metric_labels[key].set_text('—' if value is None else f'{value:.0f}%')
             description, base = self.metric_descriptions[key]
             description.set_text(base + (' · unavailable' if value is None else ''))
         self.cpu_history.append(cpu)
-        self.mem_history.append(None if mem is None else 100 * mem[0] / mem[1])
+        self.mem_history.append(values['memory'])
         self.graph.queue_draw()
         return True
 
     def tune(self):
-        p = self.page('Adjustments', 'Preferences', 'Change a preference and switch it back whenever you like.')
+        p = self.page('Adjustments', 'Preferences', 'Review settings and their effects before making changes.')
         power = box(True, 10, 'card')
         power_label = label('Power profile', 'section-title')
         power.append(power_label)
-        power.append(label('This system-wide profile affects the whole machine, not just your session. Performance mode may use more power, generate heat and reduce battery life.', 'muted', True))
+        power.append(label('The current power profile is system-wide. Changes are temporarily unavailable: changing a profile may cancel active holds requested by other applications, and switching back will not restore those holds. Performance mode may use more power, generate heat and reduce battery life.', 'muted', True))
         self.power_status = label('Checking power profiles…', 'muted', True)
         power.append(self.power_status)
         row = box(False, 8)
         self.power_choices = Gtk.DropDown.new_from_strings([])
         self.power_choices.set_hexpand(True)
-        self.power_choices.set_tooltip_text('Choose a power profile to apply')
+        self.power_choices.set_tooltip_text('Power profile changes are temporarily unavailable')
         self.power_choices.set_sensitive(False)
         self.power_apply = button('Apply…', 'secondary', self.confirm_power)
         self.power_apply.set_sensitive(False)
@@ -268,7 +270,7 @@ class Window(Gtk.ApplicationWindow):
             switch.set_sensitive(state is not None)
             if state is not None:
                 switch.set_active(state)
-                switch.connect('state-set', self.on_setting, item.key)
+                self.setting_handlers[switch] = switch.connect('state-set', self.on_setting, item.key)
             else:
                 text.append(label('Unavailable on this desktop', 'muted'))
             row.append(switch)
@@ -286,25 +288,28 @@ class Window(Gtk.ApplicationWindow):
         threading.Thread(target=work, daemon=True).start()
 
     def show_power(self, profiles, current):
+        self.power_choices.set_sensitive(False)
+        self.power_apply.set_sensitive(False)
         self.power_ids = profiles
         names = {'power-saver': 'Power saver', 'balanced': 'Balanced', 'performance': 'Performance'}
         self.power_choices.set_model(Gtk.StringList.new([names[x] for x in profiles]))
         if current in profiles:
             self.power_choices.set_selected(profiles.index(current))
-            self.power_status.set_text('Current profile: ' + names[current])
-            self.power_choices.set_sensitive(True)
-            self.power_apply.set_sensitive(True)
+            self.power_status.set_text('Current profile: ' + names[current] + ' · Changes temporarily unavailable')
         else:
             self.power_status.set_text('Power profiles are unavailable on this system.')
         return False
 
     def confirm_power(self, _button):
+        # Fail closed while profile changes are temporarily unavailable.
+        if not self.power_apply.get_sensitive():
+            return
         index = self.power_choices.get_selected()
         if index >= len(self.power_ids):
             return
         profile = self.power_ids[index]
         dialog = Gtk.MessageDialog(transient_for=self, modal=True, message_type=Gtk.MessageType.QUESTION, buttons=Gtk.ButtonsType.NONE, text='Change power profile?')
-        dialog.set_property('secondary-text', 'Apply ' + profile + ' system-wide? This affects the whole machine. Performance mode may increase heat and power use. You can select another available profile to reverse this change.')
+        dialog.set_property('secondary-text', 'Apply ' + profile + ' system-wide? This affects the whole machine and may cancel active power-profile holds requested by other applications. Switching back will not restore those holds. Performance mode may increase heat and power use.')
         dialog.add_button('Cancel', Gtk.ResponseType.CANCEL)
         dialog.add_button('Apply', Gtk.ResponseType.ACCEPT)
         dialog.set_default_response(Gtk.ResponseType.CANCEL)
@@ -325,19 +330,57 @@ class Window(Gtk.ApplicationWindow):
         dialog.present()
 
     def power_failed(self, message):
-        self.power_status.set_text('Could not change profile: ' + message)
-        self.power_apply.set_sensitive(bool(self.power_ids))
+        self.power_status.set_text('Could not change profile: ' + message + '. Power profile changes are temporarily unavailable.')
+        self.power_choices.set_sensitive(False)
+        self.power_apply.set_sensitive(False)
         return False
 
     def on_setting(self, switch, desired, key):
+        if switch in self.setting_pending:
+            return True
         try:
             actions.set_setting(key, desired)
             self.tune_feedback.set_text('Preference updated. Toggle it again to change it back.')
             switch.set_state(desired)
         except Exception as exc:
+            # Defer restoration until GTK finishes the outer state-set emission,
+            # including its accessible checked-state update.
+            self.setting_pending.add(switch)
+            switch.set_sensitive(False)
             self.tune_feedback.set_text('Could not update the preference: ' + str(exc))
-            switch.set_active(switch.get_state())
+            GLib.idle_add(self.finish_setting_failure, switch, key, str(exc))
         return True
+
+    def finish_setting_failure(self, switch, key, error):
+        try:
+            # A page/window may have been destroyed while the callback waited.
+            if switch.get_root() is not self:
+                return False
+            try:
+                actual = actions.setting_state(key)
+            except Exception:
+                actual = None
+            known = actual is not None
+            displayed = actual if known else switch.get_state()
+            handler = self.setting_handlers[switch]
+            switch.handler_block(handler)
+            try:
+                switch.set_state(displayed)
+                switch.set_active(displayed)
+            finally:
+                switch.handler_unblock(handler)
+            switch.set_sensitive(known)
+            message = 'Could not update the preference: ' + error
+            if not known:
+                message += '. Current state is unavailable; the control is disabled.'
+            self.tune_feedback.set_text(message)
+        except Exception:
+            switch.set_sensitive(False)
+            self.tune_feedback.set_text('Could not update the preference: ' + error +
+                                        '. Current state is unavailable; the control is disabled.')
+        finally:
+            self.setting_pending.discard(switch)
+        return False
 
     def cleanup(self):
         p = self.page('Storage care', 'Find space, safely', 'Start with a read-only scan. Review your files before deleting anything.')
@@ -418,7 +461,7 @@ class Window(Gtk.ApplicationWindow):
         def work():
             try:
                 actions.empty_trash()
-                result = 'Trash emptied. Some inaccessible items may remain.'
+                result = 'Trash cleanup requested. Verify your trash; some items may remain.'
             except Exception as exc:
                 result = 'Could not empty trash: ' + str(exc)
             GLib.idle_add(self.trash_finished, result)
