@@ -51,7 +51,7 @@ def empty_trash() -> None:
     if not shutil.which('gio'):
         raise RuntimeError('The gio command is not installed')
     try:
-        subprocess.run(['gio', 'trash', '--empty'], check=True, timeout=180, capture_output=True, text=True)
+        subprocess.run(['gio', 'trash', '--empty'], check=True, timeout=180, capture_output=True)
     except subprocess.TimeoutExpired as exc:
         raise RuntimeError(
             'Emptying trash timed out. Some files may already have been permanently deleted; '
