@@ -112,6 +112,41 @@ class ZramInfoTests(unittest.TestCase):
             self.collect()
         self.assertEqual(hot_add.read_text(), 'danger')
 
+    def test_unrecognized_swap_type_invalidates_table(self):
+        self.write('proc/swaps', 'Filename Type Size Used Priority\n/dev/zram0 nonsense 1 2 0\n')
+        result = self.collect()
+        self.assertIsNone(result.swaps)
+        self.assertTrue(any('malformed swap entry' in issue for issue in result.issues))
+
+    def test_power_state_tokens_are_opaque_not_readiness(self):
+        self.write('sys/power/state', 'garbage disk !!!')
+        result = self.collect()
+        self.assertEqual(result.power_states, ('garbage', 'disk', '!!!'))
+        self.assertEqual(result.issues, ())
+
+    def test_sysfs_block_symlink(self):
+        target = self.sys / 'devices/virtual/block/zram0'
+        target.mkdir(parents=True)
+        (target / 'disksize').write_text('512')
+        (target / 'comp_algorithm').write_text('[lzo] zstd')
+        (target / 'mm_stat').write_text('10 5 8 0 0')
+        (self.sys / 'block/zram0').symlink_to('../devices/virtual/block/zram0')
+        result = self.collect()
+        self.assertEqual(result.devices[0].disksize_bytes, 512)
+        self.assertEqual(result.devices[0].algorithm, 'lzo')
+        self.assertEqual(result.devices[0].memory_bytes, 8)
+        self.assertEqual(result.issues, ())
+
+    def test_swap_path_octal_escapes(self):
+        self.write('proc/swaps', 'Filename Type Size Used Priority\n/swap\\040space\\011tab\\012line\\134slash file 1 0 -1\n')
+        self.assertEqual(self.collect().swaps[0].path, '/swap space\ttab\nline\\slash')
+
+    def test_non_utf8_swap_filename_is_unknown(self):
+        (self.proc / 'swaps').write_bytes(b'Filename Type Size Used Priority\n/swap\xff file 1 0 -1\n')
+        result = self.collect()
+        self.assertIsNone(result.swaps)
+        self.assertTrue(any('unavailable or unreadable' in issue for issue in result.issues))
+
     def test_non_zram_alias_is_not_assumed(self):
         self.write('proc/swaps', 'Filename Type Size Used Priority\n/dev/disk/by-id/zram0 partition 1 0 1\n')
         self.assertFalse(self.collect().swaps[0].is_canonical_zram_path)

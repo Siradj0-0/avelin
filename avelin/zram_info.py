@@ -41,6 +41,7 @@ class Diagnostics:
     swaps: tuple[Swap, ...] | None
     devices: tuple[ZramDevice, ...] | None
     zswap_enabled: bool | None
+    # Nonempty raw tokens, not a validated list of known sleep states.
     power_states: tuple[str, ...] | None
     resume_device: str | None
     resume_offset: int | None
@@ -80,7 +81,7 @@ def _swaps(path: Path, issues: list[str]) -> tuple[Swap, ...] | None:
     result = []
     for line in lines[1:]:
         parts = line.split()
-        if len(parts) != 5 or not re.fullmatch(r'[0-9]{1,20}', parts[2]) or not re.fullmatch(r'[0-9]{1,20}', parts[3]) or not re.fullmatch(r'-?[0-9]{1,20}', parts[4]):
+        if len(parts) != 5 or parts[1] not in ('partition', 'file') or not re.fullmatch(r'[0-9]{1,20}', parts[2]) or not re.fullmatch(r'[0-9]{1,20}', parts[3]) or not re.fullmatch(r'-?[0-9]{1,20}', parts[4]):
             issues.append(f'{path}: malformed swap entry')
             return None
         # Kernel proc paths may encode whitespace/backslashes as octal escapes.
