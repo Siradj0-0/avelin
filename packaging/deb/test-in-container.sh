@@ -4,7 +4,7 @@ set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y --no-install-recommends dpkg-dev python3 desktop-file-utils xvfb xauth
+apt-get install -y --no-install-recommends dpkg-dev python3 desktop-file-utils appstream xvfb xauth
 # A deliberately non-deliverable contact, only for disposable CI test packages.
 export DEB_MAINTAINER='Avelin CI <ci@example.invalid>'
 out=$(mktemp -d)
@@ -21,6 +21,9 @@ dpkg-deb -c "$deb"
 apt-get install -y --no-install-recommends "$deb"
 dpkg-query -W -f='${Status}\n' avelin | grep -Fx 'install ok installed'
 desktop-file-validate /usr/share/applications/io.github.siradj00.avelin.desktop
+python3 "$root/packaging/deb/test_metainfo.py"
+test -f /usr/share/metainfo/io.github.siradj00.avelin.metainfo.xml
+appstreamcli validate /usr/share/metainfo/io.github.siradj00.avelin.metainfo.xml
 test -f /usr/share/icons/hicolor/scalable/apps/io.github.siradj00.avelin.svg
 cd /tmp
 # Isolated Python and an unrelated cwd ensure this is the installed copy.
@@ -38,3 +41,4 @@ test ! -e /usr/bin/avelin
 test ! -e /usr/lib/avelin/launcher.py
 test ! -e /usr/share/applications/io.github.siradj00.avelin.desktop
 test ! -e /usr/share/icons/hicolor/scalable/apps/io.github.siradj00.avelin.svg
+test ! -e /usr/share/metainfo/io.github.siradj00.avelin.metainfo.xml
