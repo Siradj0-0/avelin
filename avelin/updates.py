@@ -4,6 +4,7 @@ import json
 import re
 import urllib.error
 import urllib.request
+import urllib.parse
 from . import __version__
 
 RELEASES_URL = 'https://github.com/Siradj0-0/avelin/releases'
@@ -12,6 +13,28 @@ MAX_RELEASES = 30
 MAX_RESPONSE_BYTES = 1_000_000
 TIMEOUT_SECONDS = 8
 MAX_VERSION_LENGTH = 64
+
+
+class _ApiRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Permit redirects only within the HTTPS GitHub API origin."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        try:
+            parsed = urllib.parse.urlsplit(newurl)
+            valid = (parsed.scheme.lower() == 'https'
+                     and parsed.hostname == 'api.github.com'
+                     and parsed.port in (None, 443)
+                     and parsed.username is None and parsed.password is None)
+        except ValueError:
+            valid = False
+        if not valid:
+            raise urllib.error.HTTPError(req.full_url, code, 'Unsafe redirect', headers, fp)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+def _open_release(request, *, timeout):
+    # Build an isolated opener rather than altering urllib's process-global opener.
+    return urllib.request.build_opener(_ApiRedirectHandler()).open(request, timeout=timeout)
 
 
 def version(value: str) -> tuple[int, int, int] | None:
@@ -34,7 +57,7 @@ def check_latest() -> tuple[str, str]:
         'X-GitHub-Api-Version': '2022-11-28',
     })
     try:
-        with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
+        with _open_release(request, timeout=TIMEOUT_SECONDS) as response:
             payload = response.read(MAX_RESPONSE_BYTES + 1)
         if len(payload) > MAX_RESPONSE_BYTES:
             return 'error', 'The release list was too large to read.'
