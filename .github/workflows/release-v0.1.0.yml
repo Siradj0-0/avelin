@@ -1,0 +1,25 @@
+name: Publish v0.1.0 source preview
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/release-v0.1.0.yml']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -v && python -m compileall -q avelin
+      - name: Publish source-only prerelease if absent
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view v0.1.0 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo 'Release already exists; leaving it unchanged.'
+          else
+            gh release create v0.1.0 --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title 'Avelin v0.1.0 — source preview' --notes-file .github/release-v0.1.0.md --prerelease
+          fi

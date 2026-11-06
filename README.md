@@ -2,30 +2,32 @@
 
 <img src="assets/avelin.svg" alt="Avelin geometric mark" width="80">
 
-A little more clarity for your Linux machine. Avelin is an early-stage, native GTK 4 desktop application for understanding your system and making deliberate changes. It is **not a website**.
+A little more clarity for your Linux machine. Avelin is an early-stage **native GTK 4 desktop application** for understanding your system and making deliberate changes. It is not a website.
 
-> **Early prototype:** not production-ready. There are no published installers or releases yet. Do not rely on Avelin as a backup, a performance guarantee, or a replacement for your system's package manager.
+> **v0.1.0 is an experimental, source-only prerelease.** No installers are available. The GTK interface still needs visual, accessibility and real-distro testing. Do not use this as a backup or on a critical machine.
 
-## What works in this first foundation
+## What's in this preview
 
-- Detects Linux distribution, desktop session, CPU, PCI graphics devices (when `lspci` is available), RAM, root filesystem capacity, and active zram swap when readable.
-- Dashboard samples CPU and memory every two seconds and shows an in-memory two-minute history. Root storage is capacity used, **not** disk I/O. Unavailable readings appear as unavailable rather than zero.
-- A GNOME-only animation toggle reads the live setting and can switch it back. It does not affect non-GNOME desktops.
-- A manually confirmed **Empty trash** action calls the system `gio` tool. Deletion is permanent and may include supported mounted volumes. It never runs automatically.
-- Checks GitHub for the latest stable `vMAJOR.MINOR.PATCH` release at startup and on request. When a newer version is available, it offers the releases page. **It does not download or install updates.** A check contacts GitHub and exposes normal network metadata such as your IP address to GitHub.
-- A source SVG brand mark, open-source license, contribution and security guidelines, unit tests, and CI.
+- Detects distribution, desktop, CPU, PCI graphics devices (when `lspci` is present), RAM, root filesystem capacity and active zram swap when readable.
+- Dashboard samples CPU and RAM every two seconds and graphs an in-memory history; root storage is capacity used, not disk I/O. Unavailable readings are not reported as zero.
+- Optional power-profile selection, when `powerprofilesctl` and its service offer supported profiles. A confirmation explains the battery and heat tradeoffs.
+- Seven reversible, allowlisted GNOME user preferences, including animations, hot corner, clock, battery display and cursor blinking. These are not all performance optimizations; unsupported settings are disabled.
+- An on-demand, read-only scan estimates allocated space in common cache, home trash, APT archive, system journal and user Flatpak locations. It marks incomplete scans, does not follow symlinks or cross filesystems, and does not equate size with reclaimable space. It never removes scan results.
+- **Empty trash** is a separate, manually confirmed action. It permanently removes trash from locations managed by your desktop, including supported mounted volumes. Check the contents and your backups first.
+- Checks up to 30 GitHub releases for numeric `vMAJOR.MINOR.PATCH` tags on startup and on request, including prereleases. If newer, it offers the releases page; it **does not download or install updates**. GitHub can see normal network metadata such as your IP address.
+- Source SVG logo, MIT license, contribution and security guidance, research, unit tests and a CI configuration.
 
 ## Run from source
 
-On a Linux desktop, install **Python 3.10+**, **GTK 4**, **PyGObject for GTK 4**, **pycairo**, `gio`, and optionally `pciutils` using your distribution's package manager. Package names differ by distro. Then from the repository root:
+On a Linux desktop, install Python 3.10+, GTK 4, PyGObject for GTK 4, the PyGObject Cairo bridge, pycairo, `gio`, and optionally `pciutils` using your distribution's package manager. Package names differ by distro. Then from the repository root:
 
 ```sh
 python3 -m avelin
 ```
 
-Use the distribution Python that has the GI bindings installed. No root is needed to launch the app. The prototype has not yet been tested across all distributions or desktop environments. The desktop file is a development template, not an installer; its module must be installed on Python's import path and its icon registered before deployment.
+Use your distribution Python with GI bindings. No root is needed. The included desktop file is a development template, not an installer; its module must be installed on Python's import path and icon registered before deployment.
 
-Tests (standard library only):
+Run tests:
 
 ```sh
 python3 -m unittest discover -s tests -v
@@ -34,14 +36,10 @@ python3 -m compileall -q avelin
 
 ## Safety and limits
 
-Avelin never silently deletes files or runs privileged commands. Emptying trash is irreversible: inspect it and ensure you have a backup first. It does not scan personal directories, caches, logs, or packages; it does not claim to reclaim a particular amount. Animations are controlled by the existing GNOME user preference, not a system-wide configuration. GPU usage, disk I/O, storage device models, package cleanup, package installation, zram configuration, desktop switching, rollback snapshots, and self-updating are **not implemented**.
+Avelin never silently deletes files or runs privileged commands. Emptying trash is irreversible; inspect it and back up first. The storage scan is not a cleanup recommendation and may be partial. Package caches, logs, app data, personal files and Flatpak data are **not deleted**. GPU usage, disk I/O, disk models, privileged optimization, package installation, zram changes, desktop switching, rollback snapshots and self-updating are **not implemented**.
 
-A large settings catalog cannot safely be created by multiplying speculative tweaks. Future actions need desktop/distro detection, clear preconditions, impact and risk, preview, explicit confirmation, reversibility or warnings, authentication boundaries, tests, and documented sources. See [research and roadmap](docs/research-and-roadmap.md).
-
-## Distribution and updates
-
-Flatpak, DEB, Arch, AppImage and other builds are planned, not yet available. Sandboxed Flatpak access to host hardware and privileged changes needs a separately designed security model. Native packages should use their distro's update mechanisms; a future AppImage updater needs artifact integrity verification and a reviewed trust model. Until real release assets and those safeguards exist, no self-update will run.
+Flatpak, DEB, Arch, AppImage and other packages are planned, not available. See [research and roadmap](docs/research-and-roadmap.md) and [design direction](DESIGN.md). A future v1.0.0 is the goal for production readiness, but no software can guarantee it will work on every machine.
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). Licensed under [MIT](LICENSE).
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). Licensed under [MIT](LICENSE).

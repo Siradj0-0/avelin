@@ -37,9 +37,9 @@ class MetricsTests(unittest.TestCase):
 class SafetyTests(unittest.TestCase):
     def test_no_gnome_means_no_setting(self):
         with patch.dict('os.environ', {'XDG_CURRENT_DESKTOP':'KDE'}):
-            self.assertIsNone(actions.animation_state())
+            self.assertIsNone(actions.setting_state('enable-animations'))
             with self.assertRaises(RuntimeError):
-                actions.set_animations(False)
+                actions.set_setting('enable-animations', False)
 
     def test_trash_uses_no_shell(self):
         with patch('avelin.actions.shutil.which', return_value='/usr/bin/gio'), patch('avelin.actions.subprocess.run') as run:
@@ -55,3 +55,20 @@ class SafetyTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+class UpdateTests(unittest.TestCase):
+    def test_finds_numbered_prerelease_and_ignores_drafts(self):
+        from unittest.mock import MagicMock
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = b'[{"draft":false,"tag_name":"v0.2.0","prerelease":true},{"draft":true,"tag_name":"v9.0.0"}]'
+        with patch('avelin.updates.urllib.request.urlopen', return_value=response):
+            status, text = updates.check_latest()
+        self.assertEqual(status, 'new')
+        self.assertIn('v0.2.0', text)
+
+    def test_no_releases(self):
+        from unittest.mock import MagicMock
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = b'[]'
+        with patch('avelin.updates.urllib.request.urlopen', return_value=response):
+            self.assertEqual(updates.check_latest()[0], 'none')
