@@ -5,6 +5,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 from unittest.mock import patch
 
@@ -104,6 +105,66 @@ class JournalTests(unittest.TestCase):
             self.assertEqual(result.returncode, 23, result.stderr)
         with self.journal.locked() as s:
             self.assertIsNone(s.read())
+
+    def test_shared_session_rejects_simultaneous_foreign_threads(self):
+        barrier = threading.Barrier(3)
+        outcomes = []
+        with self.journal.locked() as s:
+            def worker():
+                barrier.wait()
+                try:
+                    s.prepare('gnome-animations', True)
+                    outcomes.append('success')
+                except uj.JournalError:
+                    outcomes.append('rejected')
+            threads = [threading.Thread(target=worker) for _ in range(2)]
+            for thread in threads:
+                thread.start()
+            barrier.wait()
+            for thread in threads:
+                thread.join(timeout=5)
+                self.assertFalse(thread.is_alive())
+            self.assertEqual(sorted(outcomes), ['rejected', 'rejected'])
+            self.assertIsNone(s.read())
+            self.assertEqual(s.prepare('gnome-animations', True)['state'], 'prepared')
+
+    def test_reentrant_session_call_is_rejected(self):
+        with self.journal.locked() as s:
+            original = s._persist
+            def reenter(record):
+                with self.assertRaises(uj.Busy):
+                    s.read()
+                return original(record)
+            with patch.object(s, '_persist', side_effect=reenter):
+                s.prepare('gnome-animations', True)
+            self.assertEqual(s.read()['state'], 'prepared')
+
+    def test_inherited_session_is_unusable_after_fork(self):
+        code = """import os, sys
+from avelin.undo_journal import Journal, JournalError
+with Journal(sys.argv[1]).locked() as s:
+    r = s.prepare('gnome-animations', True)
+    pipe_r, pipe_w = os.pipe()
+    pid = os.fork()
+    if pid == 0:
+        os.close(pipe_r)
+        try:
+            s.advance(r['transaction'], 'prepared', 'applying')
+            os.write(pipe_w, b'bad')
+        except JournalError:
+            os.write(pipe_w, b'rejected')
+        finally:
+            os.close(pipe_w)
+            os._exit(0)
+    os.close(pipe_w)
+    result = os.read(pipe_r, 32)
+    os.close(pipe_r)
+    os.waitpid(pid, 0)
+    assert result == b'rejected', result
+    assert s.read()['state'] == 'prepared'
+"""
+        result = self.child(code)
+        self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_crash_after_marking_applying_is_uncertain(self):
         code = "import sys,os; from avelin.undo_journal import Journal\nwith Journal(sys.argv[1]).locked() as s:\n r=s.prepare('gnome-animations',True); s.advance(r['transaction'],'prepared','applying'); os._exit(0)"
@@ -371,6 +432,48 @@ class JournalTests(unittest.TestCase):
                 with self.assertRaises(OSError):
                     s.advance(r['transaction'], 'prepared', 'applying')
             self.assertEqual(s.read(), r)
+
+    def test_keyboard_interrupt_after_rename_poisons_session(self):
+        r = self.seed()
+        real_fsync = os.fsync
+        def interrupt_directory(fd):
+            if stat.S_ISDIR(os.fstat(fd).st_mode):
+                raise KeyboardInterrupt()
+            return real_fsync(fd)
+        with self.journal.locked() as s:
+            with patch('avelin.undo_journal.os.fsync', side_effect=interrupt_directory):
+                with self.assertRaises(KeyboardInterrupt):
+                    s.advance(r['transaction'], 'prepared', 'applying')
+            with self.assertRaises(uj.DurabilityUncertain):
+                s.read()
+        with self.journal.locked() as s:
+            self.assertEqual(uj.recovery(s.read()), 'apply-uncertain')
+
+    def test_keyboard_interrupt_after_replace_call_poisons_session(self):
+        r = self.seed()
+        real_replace = os.replace
+        def interrupt_after_replace(*args, **kwargs):
+            real_replace(*args, **kwargs)
+            raise KeyboardInterrupt()
+        with self.journal.locked() as s:
+            with patch('avelin.undo_journal.os.replace', side_effect=interrupt_after_replace):
+                with self.assertRaises(KeyboardInterrupt):
+                    s.advance(r['transaction'], 'prepared', 'applying')
+            with self.assertRaises(uj.DurabilityUncertain):
+                s.read()
+        with self.journal.locked() as s:
+            self.assertEqual(s.read()['state'], 'applying')
+
+    def test_keyboard_interrupt_after_unlink_poisons_session(self):
+        r = self.seed()
+        with self.journal.locked() as s:
+            with patch('avelin.undo_journal.os.fsync', side_effect=KeyboardInterrupt):
+                with self.assertRaises(KeyboardInterrupt):
+                    s.discard(r['transaction'])
+            with self.assertRaises(uj.DurabilityUncertain):
+                s.read()
+        with self.journal.locked() as s:
+            self.assertIsNone(s.read())
 
     def test_discard_fsync_failure_reports_uncertainty(self):
         r = self.seed()

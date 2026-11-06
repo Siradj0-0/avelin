@@ -4,6 +4,7 @@ The caller supplies an existing private directory and holds a session across
 journal transitions and any future external operation. See docs/undo-journal.md.
 """
 from contextlib import contextmanager
+from functools import wraps
 import fcntl
 import json
 import os
@@ -11,6 +12,7 @@ import re
 import secrets
 import stat
 import sys
+import threading
 
 MAX_BYTES = 4096
 _DATA = 'undo.json'
@@ -183,12 +185,32 @@ class Journal:
             os.close(directory)
 
 
+def _single_call(method):
+    """Reject concurrent/reentrant use rather than sharing a session."""
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        self._check()
+        if self._in_call:
+            raise Busy('A journal operation is already in progress')
+        self._in_call = True
+        try:
+            return method(self, *args, **kwargs)
+        finally:
+            self._in_call = False
+    return wrapper
+
+
 class _Session:
     def __init__(self, directory, lock):
         self._directory, self._lock, self._closed = directory, lock, False
         self._uncertain = False
+        self._owner_pid = os.getpid()
+        self._owner_thread = threading.current_thread()
+        self._in_call = False
 
     def _check(self):
+        if os.getpid() != self._owner_pid or threading.current_thread() is not self._owner_thread:
+            raise JournalError('Session belongs to another process or thread')
         if self._closed:
             raise JournalError('Session is closed')
         if self._uncertain:
@@ -198,8 +220,12 @@ class _Session:
             raise UnsafePath('Journal directory is no longer private')
         _same_entry(self._directory, _LOCK, _private_regular(self._lock))
 
+    @_single_call
     def read(self):
         """Return the validated record, or None if no journal exists."""
+        return self._read()
+
+    def _read(self):
         self._check()
         try:
             fd = os.open(_DATA, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC, dir_fd=self._directory)
@@ -221,10 +247,11 @@ class _Session:
         finally:
             os.close(fd)
 
+    @_single_call
     def prepare(self, setting, previous, user_value=None):
         """Persist a new changed snapshot before a future external operation."""
         self._check()
-        if self.read() is not None:
+        if self._read() is not None:
             raise Conflict('An unresolved transaction already exists')
         record = {'version': 1, 'transaction': secrets.token_hex(16), 'setting': setting,
                   'previous': previous, 'user_value': user_value, 'state': 'prepared'}
@@ -232,6 +259,7 @@ class _Session:
         self._persist(record)
         return record.copy()
 
+    @_single_call
     def advance(self, transaction, expected, next_state):
         """Persist exactly one valid transition under the held lock."""
         self._check()
@@ -239,13 +267,14 @@ class _Session:
             raise Conflict('Invalid transaction')
         if type(expected) is not str or type(next_state) is not str or _NEXT.get(expected) != next_state:
             raise Conflict('Invalid transition')
-        record = self.read()
+        record = self._read()
         if record is None or record['transaction'] != transaction or record['state'] != expected:
             raise Conflict('Transaction or state changed')
         record['state'] = next_state
         self._persist(record)
         return record.copy()
 
+    @_single_call
     def resolve_uncertain(self, transaction, expected, outcome):
         """Record an explicit operator-reviewed outcome; never inspect settings.
 
@@ -261,27 +290,31 @@ class _Session:
                 or type(expected) is not str or type(outcome) is not str
                 or (expected, outcome) not in choices):
             raise Conflict('Invalid recovery outcome')
-        record = self.read()
+        record = self._read()
         if record is None or record['transaction'] != transaction or record['state'] != expected:
             raise Conflict('Transaction or state changed')
         record['state'] = choices[(expected, outcome)]
         self._persist(record)
         return record.copy()
 
+    @_single_call
     def discard(self, transaction):
         """Remove only a never-applied or confirmed-restored transaction."""
         self._check()
-        record = self.read()
+        record = self._read()
         if (record is None or type(transaction) is not str or transaction != record['transaction']
                 or record['state'] not in ('prepared', 'restored')):
             raise Conflict('Only prepared or restored transactions can be discarded')
         self._check()
+        # Set before the directory mutation, including for KeyboardInterrupt or
+        # other BaseException between mutation and a successful directory sync.
+        self._uncertain = True
         try:
             os.unlink(_DATA, dir_fd=self._directory)
             os.fsync(self._directory)
         except OSError as exc:
-            self._uncertain = True
             raise DurabilityUncertain('Discard may have occurred; reopen and inspect') from exc
+        self._uncertain = False
 
     def _persist(self, record):
         self._check()
@@ -306,14 +339,17 @@ class _Session:
             self._check()
             _same_entry(self._directory, name, info)
             # Validate any existing destination immediately before replace.
-            self.read()
+            self._read()
+            # From before rename until directory fsync succeeds, even an
+            # asynchronous interruption leaves the outcome uncertain.
+            self._uncertain = True
             try:
                 os.replace(name, _DATA, src_dir_fd=self._directory, dst_dir_fd=self._directory)
                 renamed = True
                 os.fsync(self._directory)
             except OSError as exc:
-                self._uncertain = True
                 raise DurabilityUncertain('Journal commit may have occurred; reopen and inspect') from exc
+            self._uncertain = False
         finally:
             os.close(fd)
             if not renamed:
