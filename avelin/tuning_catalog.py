@@ -40,10 +40,10 @@ _CATALOG = (
     ),
     TuningInfo(
         id='compressed-swap',
-        title='Compressed RAM-backed swap (zram)',
+        title='zram compressed RAM-backed block devices',
         scope='Kernel block device; can be used as swap or for other purposes',
-        prerequisites=('A kernel with zram support and distribution-specific '
-                       'configuration; swap and hibernation arrangements need '
+        prerequisites=('A kernel with zram support and appropriate configuration, '
+                       'which varies by distribution or setup; swap and hibernation need '
                        'independent verification. Applicability is not assessed.'),
         reversibility=('Restoring configuration does not recreate the previous '
                        'device state or data; safe removal and recovery depend '

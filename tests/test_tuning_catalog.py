@@ -1,5 +1,8 @@
 import dataclasses
 import socket
+import sys
+import types
+from pathlib import Path
 import subprocess
 import unittest
 from unittest.mock import patch
@@ -36,6 +39,25 @@ class TuningCatalogTests(unittest.TestCase):
              patch.object(subprocess, 'Popen', side_effect=AssertionError('process')), \
              patch.object(socket, 'socket', side_effect=AssertionError('network')):
             self.assertEqual(len(tuning_catalog.catalog()), 3)
+
+    def test_module_initialization_has_no_selected_host_access(self):
+        # Read and compile before installing the guard: this isolates execution
+        # of the catalog's own module body, not Python's import machinery.
+        source = Path(tuning_catalog.__file__).read_text()
+        code = compile(source, tuning_catalog.__file__, 'exec')
+        module = types.ModuleType('_avelin_catalog_import_probe')
+        with patch.dict(sys.modules, {module.__name__: module}), \
+             patch('builtins.open', side_effect=AssertionError('filesystem')), \
+             patch('os.open', side_effect=AssertionError('filesystem')), \
+             patch('os.stat', side_effect=AssertionError('filesystem')), \
+             patch('os.listdir', side_effect=AssertionError('filesystem')), \
+             patch('os.scandir', side_effect=AssertionError('filesystem')), \
+             patch('os.getenv', side_effect=AssertionError('environment')), \
+             patch.object(subprocess, 'run', side_effect=AssertionError('command')), \
+             patch.object(subprocess, 'Popen', side_effect=AssertionError('process')), \
+             patch.object(socket, 'socket', side_effect=AssertionError('network')):
+            exec(code, module.__dict__)
+            self.assertEqual(len(module.catalog()), 3)
 
     def test_power_hold_and_zram_recovery_are_not_claimed_reversible(self):
         entries = {entry.id: entry for entry in tuning_catalog.catalog()}
