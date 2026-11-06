@@ -105,4 +105,17 @@ def zram_status(path: str = '/proc/swaps') -> str:
     swaps = read(path)
     if swaps is None:
         return 'Unavailable'
-    return 'Active' if any('/dev/zram' in line for line in swaps.splitlines()[1:]) else 'Not detected'
+    lines = swaps.splitlines()
+    if not lines or lines[0].split() != ['Filename', 'Type', 'Size', 'Used', 'Priority']:
+        return 'Unavailable'
+    active = False
+    for line in lines[1:]:
+        fields = line.split()
+        if (len(fields) != 5 or fields[1] not in ('file', 'partition')
+                or not re.fullmatch(r'[0-9]+', fields[2])
+                or not re.fullmatch(r'[0-9]+', fields[3])
+                or not re.fullmatch(r'-?[0-9]+', fields[4])):
+            return 'Unavailable'
+        if fields[1] == 'partition' and re.fullmatch(r'/dev/zram[0-9]+', fields[0]):
+            active = True
+    return 'Active' if active else 'Not detected'
