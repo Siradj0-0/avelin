@@ -16,7 +16,7 @@ A little more clarity for your Linux machine. Avelin is an early-stage **native 
 - Seven reversible, allowlisted GNOME user preferences, including animations, hot corner, clock, battery display and cursor blinking. These are not all performance optimizations; unsupported settings are disabled.
 - An on-demand, read-only scan estimates allocated space in common cache, home trash, APT archive, system journal and user Flatpak locations. It marks incomplete scans, skips symlink entries and different-device entries, and does not equate size with reclaimable space. Initial path prefixes may contain symlinks and same-device bind mounts may be traversed. It never removes scan results.
 - **Empty trash** is a separate, manually confirmed action. It permanently removes trash from locations managed by your desktop, including supported mounted volumes. Check the contents and your backups first.
-- Checks up to 30 GitHub releases for numeric `vMAJOR.MINOR.PATCH` tags on startup and on request, including prereleases. If newer, it offers the releases page; it **does not download or install updates**. GitHub can see normal network metadata such as your IP address.
+- Checks up to 30 GitHub releases for numeric `MAJOR.MINOR.PATCH` tags, with an optional `v` prefix, on startup and on request, including prereleases. If newer, it offers the releases page; it **does not download or install updates**. GitHub can see normal network metadata such as your IP address.
 - Source SVG logo, MIT license, contribution and security guidance, research, unit tests and a CI configuration.
 
 ## Run from source
