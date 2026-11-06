@@ -86,7 +86,7 @@ class Window(DashboardMixin, Gtk.ApplicationWindow):
         super().__init__(application=app, title='Avelin')
         self.set_default_size(1120, 740)
         self.set_size_request(780, 560)
-        self._init_dashboard()
+        self._init_dashboard(GLib.timeout_add_seconds, GLib.source_remove)
         self.setting_handlers = {}
         self.setting_pending = set()
         self.update_label = None
@@ -130,8 +130,6 @@ class Window(DashboardMixin, Gtk.ApplicationWindow):
         sidebar.append(label('Made for Linux', 'overline'))
         sidebar.append(label('Open source  /  v' + __version__, 'muted'))
         root.append(self.stack)
-        self.sample()
-        GLib.timeout_add_seconds(2, self.sample)
         self.check_update()
 
     def select_page(self, toggle, key):
