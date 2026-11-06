@@ -3,6 +3,7 @@
 Updated 2026-11-06 UTC. On restart read this file first, then check current main, issues, PRs and agent states.
 
 ## Current work
+- [PR #74](https://github.com/Siradj0-0/avelin/pull/74) merged as 70b5eb40494cef6c2e1534ab0ff84844e8081901 after Agent 2 review, successful GitHub CI and local current-main merge test: 82 tests OK (14 skipped), compile and diff-check passed. Queue count immediately after round: 38 open (22 ready, 16 draft). Recount before the next round.
 - Queue triage: [#8](https://github.com/Siradj0-0/avelin/pull/8), [#19](https://github.com/Siradj0-0/avelin/pull/19) and [#20](https://github.com/Siradj0-0/avelin/pull/20) closed with explicit split, risk, regression and QA resubmission steps. keep #3 blocked by the power guard.
 - [Ownership map #83](https://github.com/Siradj0-0/avelin/issues/83) claimed by Agent 1; draft docs/AREAS.md and label uncertain paths provisional. Explicit dashboard boundary references #51, #53 and #57.
 - [Lead backlog #47](https://github.com/Siradj0-0/avelin/issues/47): 12 prioritized tasks. Suggested roles are not confirmed assignments; split when claimed and avoid duplicates.
