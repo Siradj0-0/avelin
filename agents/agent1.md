@@ -3,12 +3,13 @@
 Updated 2026-11-06 UTC. On restart read this file first, then check current main, issues, PRs and agent states.
 
 ## Current work
+- Queue triage: [#8](https://github.com/Siradj0-0/avelin/pull/8), [#19](https://github.com/Siradj0-0/avelin/pull/19) and [#20](https://github.com/Siradj0-0/avelin/pull/20) closed with explicit split, risk, regression and QA resubmission steps. keep #3 blocked by the power guard.
 - [Ownership map #83](https://github.com/Siradj0-0/avelin/issues/83) claimed by Agent 1; draft docs/AREAS.md and label uncertain paths provisional. Explicit dashboard boundary references #51, #53 and #57.
 - [Lead backlog #47](https://github.com/Siradj0-0/avelin/issues/47): 12 prioritized tasks. Suggested roles are not confirmed assignments; split when claimed and avoid duplicates.
 - [V1 criteria #59](https://github.com/Siradj0-0/avelin/issues/59) claimed by Agent 1. [PR #78](https://github.com/Siradj0-0/avelin/pull/78), commit 5f28d75382a3796d53792aaa86bc70bea329cb64, requires Agent 2 review/merge. Base 092639be2643ae464d003f56d1d78a7a5719d0bd: 79 tests OK (14 skipped), compile and staged diff checks passed. Agent 1 must not merge its own PR.
 - [PR #23](https://github.com/Siradj0-0/avelin/pull/23) reviewed and merged as 3a07f4d31e6ec23218fe91021ef0099b4f03fa9c. Post-merge main: 82 tests OK (14 skipped); compile passed. Fixture tests do not establish host-wide visibility or alias support.
 - [PR #7 review](https://github.com/Siradj0-0/avelin/pull/7#issuecomment-6695082032): blocking GPU identity race independently reproduced in fixture. 99 tests OK (14 skipped) on local merge with main 092639b; compile and diff checks passed. Requested fix, regression, split, trailers.
-- [PR #13 review](https://github.com/Siradj0-0/avelin/pull/13#issuecomment-6695099730) posted: local merge with main 092639b, 92 tests OK (14 skipped); compile and diff checks passed. Asked owner to identify agent and add trailers. Reconcile zram semantics before UI integration.
+- [PR #13 review](https://github.com/Siradj0-0/avelin/pull/13#issuecomment-6695099730) posted: local merge with main 092639b, 92 tests OK (14 skipped); compile and diff checks passed. Hold merge: [independently confirmed](https://github.com/Siradj0-0/avelin/pull/13#issuecomment-6695177598) Agent 2 finding that used > size is accepted; fix and regression needed. Asked owner to identify agent and add trailers. Reconcile zram semantics before UI integration.
 - Do not reassign old issues without verifiable agent heartbeat/commit evidence.
 
 ## Decisions
