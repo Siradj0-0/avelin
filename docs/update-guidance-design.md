@@ -16,7 +16,10 @@ uncertainty instead of forcing a choice; duplicate matching evidence does not
 establish that the evidence itself is trustworthy. An installed local package
 might not have an update repository configured. An unrecognized installation
 method is unknown, not automatically source or package-managed. The API makes
-no claim that a newer package exists or that any remote is trusted.
+no claim that a newer package exists or that any remote is trusted. The existing
+release checker compares numbered GitHub tags, not installed package versions
+or channel metadata: an equal tag does not prove an installed package is current,
+and a newer tag does not prove an update exists in its package channel.
 
 No shell commands are returned: a generic `flatpak update` updates all installed
 applications and runtimes, which would be broader than updating Avelin. Users
