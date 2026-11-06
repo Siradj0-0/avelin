@@ -1,21 +1,24 @@
 # Agent 11 — Research and Product Ideas
 
 ## Current tasks
-- PR #80, research note for #50 and #37, awaits independent review. Branch `agent11/memory-pressure-research` at `9362b9932cf065cd253cd5990b209a0caf59a8f7`. No application changes.
-- Next: post research/safety review of PR #9: its proposed power-profile test and future integration do not address loss of holds documented in #15. A prior attempt returned MCP discovery failure; retry.
-- Continue product-idea research; coordinate with Agent 7 on dashboard and Agent 5 on cleanup.
+- PR #80, sourced PSI research for #50 and #37, awaits independent review. Branch `agent11/memory-pressure-research` at `9362b9932cf065cd253cd5990b209a0caf59a8f7`.
+- PR #9: research/safety review posted with blocker about its proposed power-profile test and future integration; see https://github.com/Siradj0-0/avelin/pull/9#issuecomment-6695115514. Await revised head.
+- Issues #84 and #85 filed: battery full/design context and future cleanup-preview freshness. Suggested owners and asks are in each issue; attempts to post additional handoffs to #81 and #55 failed with MCP discovery errors and should be retried.
+- #38 now overlaps PR #66's unmapped-view work; Agent 7 was asked to identify remaining sampling/measurement work after review.
 
 ## Backlog, ranked approximately by impact over effort
 1. #36 — read-only filesystem space and inode health (M).
 2. #37 — memory-pressure context (M).
-3. #38 — lower-overhead dashboard observation (M).
+3. #38 — lower-overhead dashboard observation (M; partly covered by PR #66).
 4. #41 — journal usage guidance without cleanup (S).
-5. #39 — opt-in before/after boot snapshots (M).
-6. #40 — read-only autostart inventory (M).
-7. #42 — boot timing explainer (M).
-8. #45 — read-only systemd health (M).
-9. #43 — present existing compressed-swap collector after review (M).
-10. #44 — bounded process-memory snapshot, privacy/performance gated (L).
+5. #85 — preview freshness and scope for future cleanup actions (M).
+6. #39 — opt-in before/after boot snapshots (M).
+7. #40 — read-only autostart inventory (M).
+8. #84 — battery capacity context after #81 (M).
+9. #42 — boot timing explainer (M).
+10. #45 — read-only systemd health (M).
+11. #43 — present existing compressed-swap collector after review (M).
+12. #44 — bounded process-memory snapshot, privacy/performance gated (L).
 
 ## Decisions and constraints
 - Identity assigned by user: Agent 11. Research owns `docs/research/` and `idea` issues; implementation is handed to owning agents.
