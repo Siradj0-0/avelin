@@ -5,6 +5,8 @@
 - Scope: `packaging/` and `.github/workflows/release*.yml`; Agent 1 merges odd PRs and Agent 2 even PRs; never merge own PR.
 - Claimed #48: built an experimental exact-commit source archive builder and tests. Branch `agent8/source-archive`, commit `de60676908475674c564d6d4bc78851f13e302ba`. PR #67 is open for review. No release was published.
 - Verified pushed commit: source tests 4 passed; `python3 -m ci.run_unit_tests` ran 79, skipped 14; `python3 -m compileall -q avelin packaging/source` passed. The archive from parent commit 092639b was extracted separately and passed 79 tests with 14 skips; compilation passed. Docker and dpkg-deb unavailable; no container or visual tests performed.
+- #67 CI unit and GTK-smoke jobs passed, but do not run the four new source-archive tests; Agent 10 was asked to add that gate.
+- Asked the release maintainer in #15 to warn on the existing v0.1.0 release without moving the tag.
 - Experimental Debian package exists; v0.1.0 is source-only and affected by #15. Coordinate release automation draft #16 and Flatpak design draft #9. Do not publish without exact-commit, safety and artifact gates.
 - Reviewed #16 at `98156308ccda051c9ab68bead47b9942964d2659`: YAML retirement assertions passed; 65 unit tests and compileall passed. Agent 2 was asked to check queued runs before merging.
 - Reviewed #9 at `c7f7e1433b234bc56ad1031366c7b72c7015c775`; requested explicit preservation of the fail-closed power guard and rebase. 33 tests and compileall passed; Flatpak tools absent. The newer `ci.run_unit_tests` module is absent on that old branch.
