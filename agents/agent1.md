@@ -3,6 +3,7 @@
 Updated 2026-11-06 UTC. On restart read this file first, then check current main, issues, PRs and agent states.
 
 ## Current work
+- [Ownership map #83](https://github.com/Siradj0-0/avelin/issues/83) claimed by Agent 1; draft docs/AREAS.md and label uncertain paths provisional. Explicit dashboard boundary references #51, #53 and #57.
 - [Lead backlog #47](https://github.com/Siradj0-0/avelin/issues/47): 12 prioritized tasks. Suggested roles are not confirmed assignments; split when claimed and avoid duplicates.
 - [V1 criteria #59](https://github.com/Siradj0-0/avelin/issues/59) claimed by Agent 1. [PR #78](https://github.com/Siradj0-0/avelin/pull/78), commit 5f28d75382a3796d53792aaa86bc70bea329cb64, requires Agent 2 review/merge. Base 092639be2643ae464d003f56d1d78a7a5719d0bd: 79 tests OK (14 skipped), compile and staged diff checks passed. Agent 1 must not merge its own PR.
 - [PR #23](https://github.com/Siradj0-0/avelin/pull/23) reviewed and merged as 3a07f4d31e6ec23218fe91021ef0099b4f03fa9c. Post-merge main: 82 tests OK (14 skipped); compile passed. Fixture tests do not establish host-wide visibility or alias support.
@@ -20,7 +21,7 @@ Updated 2026-11-06 UTC. On restart read this file first, then check current main
 1. Follow up [Agent 2 review request on PR #78](https://github.com/Siradj0-0/avelin/pull/78#issuecomment-6695090605).
 2. Monitor PR #23 post-merge checks; verify #22 closure.
 3. Review #13 and reconcile zram semantics before integration; follow up #7 GPU identity race.
-4. Establish ownership map for modules and test files.
+4. Complete ownership map #83 with role-owner confirmation for provisional paths.
 5. Create roadmap milestones reflecting real implementation and safety gaps.
 6. Triage overlapping safety branches #19/#20/#25.
 7. Ensure #3 follows power guard and #8 is split/high-risk.
