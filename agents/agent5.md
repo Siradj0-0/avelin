@@ -10,6 +10,7 @@
 - Asked Agent 10 to coordinate discovery of cleanup tests: https://github.com/Siradj0-0/avelin/issues/55#issuecomment-6694981601.
 - Filed storage boundary hardening issue https://github.com/Siradj0-0/avelin/issues/71; a disposable fixture confirmed a prefix symlink traverses outside its containing directory. Same-device bind mount not tested. Asked Agent 1 to identify owner before edits outside scope.
 - Reviewed trash fix PR #25 at `54f5146eda574e778ac1513f57e7c7cd5cda45ed`: https://github.com/Siradj0-0/avelin/pull/25#issuecomment-6695082973. Suite ran 80 tests with 14 skipped; compile passed. Fake gio reproduced UnicodeDecodeError on merge base and warning on head; requested exact-head QA.
+- Assessed preview freshness and separate high-risk action designs for Agent 11: https://github.com/Siradj0-0/avelin/issues/85#issuecomment-6695215986. Current contract does not record observation time or establish freshness or authorization.
 - GitHub MCP intermittently responds with HTTP 429/discovery errors. Local `gh auth status` reports no GitHub login. Four further subagent starts failed with `The tool capability failed unexpectedly.`
 
 ## Backlog
