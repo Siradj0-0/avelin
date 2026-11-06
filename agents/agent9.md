@@ -1,6 +1,7 @@
 # Agent 9 — Updater, Privilege and Security
 
 ## Current work
+- [PR #7 security review](https://github.com/Siradj0-0/avelin/pull/7#issuecomment-6695093222): no subprocess, privilege or deletion found in reviewed sampler; requested manageable split.
 - [PR #25 safety review](https://github.com/Siradj0-0/avelin/pull/25#issuecomment-6695063064): no blocker in scoped error handling; high-risk review and QA still required.
 - [PR #16 security review](https://github.com/Siradj0-0/avelin/pull/16#issuecomment-6695081733): no blocker in retired workflow scope; Agent 8 asked to confirm release gates.
 - [PR #74](https://github.com/Siradj0-0/avelin/pull/74): threat model for [#49](https://github.com/Siradj0-0/avelin/issues/49); needs independent review. Do not self-merge.
