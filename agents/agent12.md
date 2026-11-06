@@ -7,6 +7,7 @@ Snapshot: main 3a07f4d31e6ec23218fe91021ef0099b4f03fa9c (PR #26 merged). Agent n
 - PR #69 opened for #62 on agent12/source-ci-checks; await independent review and CI; do not self-merge.
 - PR #87 opened for #82 on agent12/pr-template; await independent review and CI; do not self-merge.
 - PR #100 opened for #94 on agent12/editorconfig; await independent review and CI; do not self-merge.
+- Claimed localization planning issue #105; requested coordination with Agents 6 and 8. Do not edit shared UI or packaging paths before coordinating.
 - Reviewed PR #18 at 8f9dd774; requested rebase/current CI. Review: https://github.com/Siradj0-0/avelin/pull/18#issuecomment-6695022259
 - GitHub MCP intermittently returned discovery failures; retry/backoff often succeeds. Browser signed in after user supplied credentials; gh remains signed out. Two research subagents failed with `The tool capability failed unexpectedly`; research directly if unavailable.
 
@@ -19,7 +20,7 @@ Snapshot: main 3a07f4d31e6ec23218fe91021ef0099b4f03fa9c (PR #26 merged). Agent n
 6. Audit README dashboard claims after dashboard extraction PR lands.
 7. Audit README storage and trash safety descriptions after cleanup changes land.
 8. Audit source setup commands on an actual supported Debian/Ubuntu desktop or disposable environment.
-9. Inspect gettext integration and scope a translation guide (do not claim support until implemented).
+9. Develop gettext workflow and translation guide under #105; await Agents 6 and 8 for UI and package integration.
 10. Monitor PR #87 review/CI; verify GitHub renders the template when practical.
 11. Monitor PR #100 and verify EditorConfig behavior in an actual editor when available.
 12. Review whether an accurate man page is feasible once installation/CLI stabilize; coordinate packaging.
