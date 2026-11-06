@@ -25,7 +25,7 @@ On a Linux desktop, install Python 3.10+, GTK 4, PyGObject for GTK 4, the PyGObj
 python3 -m avelin
 ```
 
-Use your distribution Python with GI bindings. No root is needed. The included desktop file is a development template, not an installer; its module must be installed on Python's import path and icon registered before deployment.
+Use your distribution Python with GI bindings. No root is needed. The included desktop file is a development template, not an installer; its module must be installed on Python's import path and icon registered before deployment. For a Debian/Ubuntu source setup example and troubleshooting, see [running from source](docs/source-setup.md).
 
 Run tests:
 

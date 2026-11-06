@@ -1,0 +1,45 @@
+name: Bug report
+description: Report a reproducible problem with Avelin
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping improve Avelin. **Do not include passwords, tokens, personal files or private paths.** Review logs before posting. Avelin is experimental: back up important data before testing cleanup or settings changes.
+  - type: input
+    id: version
+    attributes:
+      label: Avelin version or commit
+      placeholder: "v0.1.0 or commit SHA"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Linux distribution, version and desktop
+      placeholder: "For example: Debian 12, GNOME 43"
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: Installation method
+      options:
+        - Source
+        - Local experimental DEB
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Explain what you did, what you expected and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized logs or screenshots
+      description: Optional. Remove secrets, usernames, file paths and other sensitive data first.
