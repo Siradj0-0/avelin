@@ -11,6 +11,12 @@ from typing import Mapping
 import re
 
 
+class DnfImplementation(str, Enum):
+    UNKNOWN = 'unknown'
+    LEGACY = 'legacy-dnf'
+    DNF5 = 'dnf5'
+
+
 class Presence(str, Enum):
     PRESENT = 'present'
     ABSENT = 'absent'
@@ -22,10 +28,12 @@ class ToolEvidence:
     """Caller observations, not inferred from distro, PATH, or one another."""
     package: Presence = Presence.UNKNOWN
     executable: Presence = Presence.UNKNOWN
+    dnf_implementation: DnfImplementation = DnfImplementation.UNKNOWN
 
     def __post_init__(self) -> None:
-        if not isinstance(self.package, Presence) or not isinstance(self.executable, Presence):
-            raise ValueError('Evidence must use Presence values')
+        if (not isinstance(self.package, Presence) or not isinstance(self.executable, Presence)
+                or not isinstance(self.dnf_implementation, DnfImplementation)):
+            raise ValueError('Evidence must use the declared enum values')
 
 
 @dataclass(frozen=True)
@@ -69,6 +77,8 @@ class CleanupPlan:
 
 _APT = 'https://manpages.ubuntu.com/manpages/noble/man8/apt-get.8.html'
 _DNF = 'https://dnf.readthedocs.io/en/latest/command_ref.html'
+_FEDORA_DNF5 = 'https://fedoraproject.org/wiki/Changes/SwitchToDnf5#Provider_of_the_dnf_command'
+_DNF5 = 'https://dnf5.readthedocs.io/en/stable/commands/clean.8.html'
 _PACCACHE = 'https://man.archlinux.org/man/paccache.8.en'
 _ARCH = 'https://wiki.archlinux.org/title/Pacman'
 
@@ -89,7 +99,7 @@ def _family(os_release: Mapping[str, str] | None) -> tuple[str | None, str | Non
     raw_id, raw_like = os_release.get('ID', ''), os_release.get('ID_LIKE', '')
     if not isinstance(raw_id, str) or not isinstance(raw_like, str):
         return None, None, None
-    # A malformed ID or ID_LIKE cannot be used as distribution evidence.
+    # Validate ID first; ID_LIKE is consulted and validated only for an unknown ID.
     if raw_id and not _ID.fullmatch(raw_id):
         return None, None, None
     ident = raw_id or None
@@ -111,8 +121,9 @@ def build_cleanup_plan(
     """Return static advice from supplied facts. Never requests or records approval.
 
     Evidence keys are the exact executable names apt-get, paccache and dnf.
-    Missing evidence is unknown. Callers must independently establish evidence;
-    it is a potentially stale observation, not an authorization to act.
+    Missing evidence is unknown. DNF requires explicit legacy implementation
+    evidence; DNF5 and unknown implementations have no option. Callers must
+    independently establish evidence; it is not an authorization to act.
     """
     distribution_id, family, matched_by = _family(os_release)
     observations = evidence if evidence is not None else {}
@@ -130,6 +141,12 @@ def build_cleanup_plan(
             'Distribution family is unsupported or unknown; no cleanup options are suggested.',))
     if matched_by == 'ID_LIKE':
         notices += ('Family inferred from ID_LIKE; compatibility is not guaranteed.',)
+    if family == 'dnf':
+        dnf_evidence = observations.get('dnf', ToolEvidence())
+        if dnf_evidence.dnf_implementation != DnfImplementation.LEGACY:
+            return CleanupPlan(distribution_id, family, matched_by, (), notices + (
+                'No DNF option: legacy DNF implementation has not been independently established; DNF5 is not supported by this planner.',))
+        notices += ('Legacy DNF implementation is caller-supplied and may be stale; it is not detected by this planner.',)
 
     specs = {
         'debian': ('apt-autoclean', 'APT obsolete archive cleanup', 'apt', 'apt-get',
@@ -146,14 +163,14 @@ def build_cleanup_plan(
              'Local configuration and options affect the candidates.'),
             'Paccache documents a dry run, but this plan does not run it or enumerate candidates.',
             (_PACCACHE, _ARCH)),
-        'dnf': ('dnf-packages', 'DNF cached package cleanup', 'dnf', 'dnf',
+        'dnf': ('dnf-packages', 'Legacy DNF cached package cleanup', 'dnf', 'dnf',
             'The executing user’s DNF cache; the root user has a separate system cache. Actual scope depends on configuration.',
             'Would remove cached package files, not installed packages; other repository metadata is not the intended target.',
             ('Caches may include data from disabled or removed repositories and other distribution versions.',
              'Cached packages may be needed for offline reinstalls or downgrades.',
              'DNF versions and configuration can differ; do not assume DNF5 has identical behavior.'),
             'No supported read-only candidate or size preview is claimed for DNF clean packages; this plan does not invoke DNF.',
-            (_DNF,)),
+            (_DNF, _FEDORA_DNF5, _DNF5)),
     }
     option_id, title, package, executable, scope, effect, risks, limits, sources = specs[family]
     observed = observations.get(executable, ToolEvidence())
