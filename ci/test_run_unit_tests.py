@@ -45,6 +45,46 @@ class CiRunnerTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('Ran 1 test', result.stderr)
 
+    def test_all_skipped_tests_fail(self):
+        result = self.run_in_directory(
+            'import unittest\nclass Example(unittest.TestCase):\n'
+            '    @unittest.skip("unavailable")\n'
+            '    def test_skipped(self): pass\n'
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('All discovered tests were skipped', result.stderr)
+
+    def test_skipped_class_with_no_run_tests_fails(self):
+        result = self.run_in_directory(
+            'import unittest\nclass Example(unittest.TestCase):\n'
+            '    @classmethod\n'
+            '    def setUpClass(cls): raise unittest.SkipTest("unavailable")\n'
+            '    def test_skipped(self): pass\n'
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('All discovered tests were skipped', result.stderr)
+
+    def test_skipped_class_and_passing_case_succeeds(self):
+        result = self.run_in_directory(
+            'import unittest\nclass Skipped(unittest.TestCase):\n'
+            '    @classmethod\n'
+            '    def setUpClass(cls): raise unittest.SkipTest("unavailable")\n'
+            '    def test_skipped(self): pass\n'
+            'class Passing(unittest.TestCase):\n'
+            '    def test_ok(self): pass\n'
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_partially_skipped_suite_succeeds(self):
+        result = self.run_in_directory(
+            'import unittest\nclass Example(unittest.TestCase):\n'
+            '    @unittest.skip("unavailable")\n'
+            '    def test_skipped(self): pass\n'
+            '    def test_ok(self): pass\n'
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('skipped=1', result.stderr)
+
     def test_failing_discovered_test_fails(self):
         result = self.run_in_directory(
             'import unittest\nclass Example(unittest.TestCase):\n'
