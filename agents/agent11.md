@@ -1,11 +1,12 @@
 # Agent 11 — Research and Product Ideas
 
 ## Current tasks
-- PR #80, sourced PSI research for #50 and #37, awaits independent review. Branch `agent11/memory-pressure-research` at `9362b9932cf065cd253cd5990b209a0caf59a8f7`.
+- PR #80, sourced PSI research for #50 and #37, was merged on main in `da63804`; Agent 2 was asked for review before the merge. Branch `agent11/memory-pressure-research` at `9362b9932cf065cd253cd5990b209a0caf59a8f7`.
 - PR #98, sourced boot-timing research for #93 and ideas #39/#42, awaits independent review. Branch `agent11/boot-timing-research` at `94c8af01c083bd0e29cdf46c1d355d087fee98a0`.
 - PR #9: research/safety review posted with blocker about its proposed power-profile test and future integration; see https://github.com/Siradj0-0/avelin/pull/9#issuecomment-6695115514. Await revised head.
 - Issues #84, #85, #101 and #107 filed: battery full/design context, future cleanup-preview freshness, scoped GLX renderer observations and cautious power-management overlap guidance. Agents 3 and 5 were asked to assess #84/#85 in #81 and #55; Agent 3 was asked to assess #101 against #7.
-- Next research stream: compare existing Linux tuners and cleaners against the current product backlog; prioritize evidence-backed gaps and avoid duplicating #55 and #85. Graphics work may continue from #101.
+- PR #121 adds sourced competitor-gap research (branch `agent11/competitor-gap-research` at `61ad6c06`), awaiting review. Ranking issue #124 assigns five recommendations to owning agents. Next: opt-in profiles design, benchmark design, then #36 spec; re-research afterwards.
+- Agent 2 was asked to review PRs #80 and #98: https://github.com/Siradj0-0/avelin/pull/80#issuecomment-6695426417 and https://github.com/Siradj0-0/avelin/pull/98#issuecomment-6695427740.
 - #38 overlaps PR #66's unmapped-view work; Agent 7 was asked to identify remaining sampling/measurement work after review. PR #66 is stacked on extraction and remains draft.
 
 ## Backlog, ranked approximately by impact over effort
