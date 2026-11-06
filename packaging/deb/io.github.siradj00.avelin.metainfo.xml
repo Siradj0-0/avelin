@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.siradj00.avelin</id>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Avelin</name>
+  <summary>A clearer view of your Linux system</summary>
+  <description>
+    <p>Avelin is an experimental Linux system companion. It displays hardware information and live CPU and memory readings when available.</p>
+    <p>It can scan common storage locations and offers selected user settings. Emptying trash is a separate, confirmed action and is irreversible.</p>
+  </description>
+  <launchable type="desktop-id">io.github.siradj00.avelin.desktop</launchable>
+  <url type="homepage">https://github.com/Siradj0-0/avelin</url>
+</component>
