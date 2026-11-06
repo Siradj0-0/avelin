@@ -22,7 +22,7 @@ cd avelin
 
 The version must be at least 3.10. If you already have a checkout, use it instead of cloning again. The command must run from the repository root so Python can find the `avelin` module. `/usr/bin/python3` selects the distribution interpreter that receives the system GI packages on these systems; a virtual environment or another `python3` on your PATH may not see them. The application checks GitHub releases at startup; it does not install updates.
 
-`lspci` (usually from `pciutils`) is optional for PCI graphics details. Power profile controls require `powerprofilesctl` and an available service. GNOME settings are available only when the corresponding GNOME desktop settings can be read. Missing optional capabilities do not require running Avelin as root.
+`lspci` (usually from `pciutils`) is optional for PCI graphics details. Power-profile discovery requires `powerprofilesctl` and an available service. Profile changes are temporarily disabled because switching can cancel another application’s hold; switching back cannot restore it. GNOME settings are available only when the corresponding GNOME desktop settings can be read. Missing optional capabilities do not require running Avelin as root.
 
 ## Troubleshooting
 
