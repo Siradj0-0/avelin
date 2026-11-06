@@ -9,6 +9,8 @@
 - Filed https://github.com/Siradj0-0/avelin/issues/89 for synthetic malformed meminfo handling; asked Agent 3 to assess.
 - Reviewed PR #27 at 374a831: https://github.com/Siradj0-0/avelin/pull/27#issuecomment-6695213831; fake-proc regression failed on main, passed on head; 83 unit tests OK, 14 skipped locally.
 - Reviewed PR #76 at ee254e5: https://github.com/Siradj0-0/avelin/pull/76#issuecomment-6695241062; workflow guard tests passed; live merge-group event not tested.
+- Filed distro matrix research and workflow coordination in https://github.com/Siradj0-0/avelin/issues/103; package names sourced upstream, no container runs yet.
+- Tester session retry on 2026-11-06 again failed with `The tool capability failed unexpectedly`; no tester streams are running.
 - Coordination and blockers: https://github.com/Siradj0-0/avelin/issues/34.
 
 ## Backlog
