@@ -17,8 +17,24 @@ deb=$1
 [ "$(dpkg-deb -f "$deb" Architecture)" = all ]
 dpkg-deb -f "$deb" Depends | grep -F 'python3-gi-cairo'
 dpkg-deb -c "$deb"
-# This installs the package's dependencies through APT, not by hand.
+# Create an explicitly synthetic older-version package from the candidate. This
+# exercises package-manager upgrade mechanics, not a real historic release.
+version=$(dpkg-deb -f "$deb" Version)
+old_version='0~agent8-test'
+dpkg --compare-versions "$old_version" lt "$version"
+old_stage="$out/old-stage"
+old_deb="$out/synthetic-old.deb"
+dpkg-deb --raw-extract "$deb" "$old_stage"
+sed -i "s/^Version: .*/Version: $old_version/" "$old_stage/DEBIAN/control"
+dpkg-deb --root-owner-group --build "$old_stage" "$old_deb"
+[ "$(dpkg-deb -f "$old_deb" Version)" = "$old_version" ]
+sha256sum "$deb" > "$out/candidate.sha256"
+# Both installs resolve dependencies through APT inside this disposable container.
+apt-get install -y --no-install-recommends "$old_deb"
+[ "$(dpkg-query -W -f='${Version}' avelin)" = "$old_version" ]
 apt-get install -y --no-install-recommends "$deb"
+[ "$(dpkg-query -W -f='${Version}' avelin)" = "$version" ]
+sha256sum -c "$out/candidate.sha256"
 dpkg-query -W -f='${Status}\n' avelin | grep -Fx 'install ok installed'
 desktop-file-validate /usr/share/applications/io.github.siradj00.avelin.desktop
 test -f /usr/share/icons/hicolor/scalable/apps/io.github.siradj00.avelin.svg
