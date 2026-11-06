@@ -49,6 +49,46 @@ class UpdateGuidanceTests(unittest.TestCase):
         for evidence in ((HashBomb(),), [InstallOrigin.PACKAGE, HashBomb()]):
             self.assertEqual(update_guidance(evidence).origin, InstallOrigin.UNKNOWN)
 
+    def test_spoofed_class_rejected_before_hashing(self):
+        class Spoof:
+            @property
+            def __class__(self):
+                return InstallOrigin
+
+            def __hash__(self):
+                raise AssertionError('must not hash spoofed enum')
+
+        spoof = Spoof()
+        self.assertTrue(isinstance(spoof, InstallOrigin))
+        self.assertEqual(update_guidance([spoof]).origin, InstallOrigin.UNKNOWN)
+
+    def test_post_snapshot_mutation_does_not_change_classification(self):
+        import inspect
+        import sys
+
+        evidence = [InstallOrigin.PACKAGE, InstallOrigin.FLATPAK]
+        source, start = inspect.getsourcelines(update_guidance)
+        after_snapshot = start + next(
+            i for i, line in enumerate(source) if line.lstrip().startswith('if len(snapshot)')
+        )
+        changed = []
+
+        def trace(frame, event, arg):
+            if (event == 'line' and frame.f_code is update_guidance.__code__
+                    and frame.f_lineno == after_snapshot):
+                evidence.pop()
+                changed.append(True)
+            return trace
+
+        previous_trace = sys.gettrace()
+        try:
+            sys.settrace(trace)
+            result = update_guidance(evidence)
+        finally:
+            sys.settrace(previous_trace)
+        self.assertTrue(changed)
+        self.assertEqual(result.origin, InstallOrigin.UNKNOWN)
+
     def test_list_subclass_rejected_without_iteration(self):
         class HostileList(list):
             def __iter__(self):

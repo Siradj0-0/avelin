@@ -14,7 +14,10 @@ tuple containing at most 64 `InstallOrigin` enum values. A single distinct
 recognized origin selects package-managed, Flatpak or source guidance. Unknown,
 unrecognized, malformed, oversized, or conflicting evidence yields unknown.
 Mappings, sets, generators, other iterators and container subclasses are rejected
-without iteration. A caller must surface uncertainty instead of forcing a
+without iteration. The module validates a bounded snapshot; callers must not
+mutate the evidence concurrently. The snapshot is not atomic evidence
+collection or proof of ownership, and cannot detect facts removed before or
+during capture. A caller must surface uncertainty instead of forcing a
 choice; duplicate matching evidence does not establish that evidence itself is
 trustworthy. An installed local package might not have an update repository
 configured. An unrecognized installation method is unknown, not automatically

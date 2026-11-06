@@ -47,13 +47,18 @@ _GUIDANCE = {
 def update_guidance(verified_origins: tuple[InstallOrigin, ...] | list[InstallOrigin] = ()) -> Guidance:
     """Select guidance from a bounded list or tuple of verified origins.
 
-    Other containers, malformed or conflicting values, and lists/tuples
-    longer than 64 return unknown. Evidence itself is not validated.
+    Only exact InstallOrigin members are accepted. Other containers,
+    malformed or conflicting values, and lists/tuples
+    longer than 64 return unknown. Do not mutate evidence concurrently.
+    The snapshot is not proof of ownership or an atomic verification.
     """
-    if (type(verified_origins) not in (tuple, list) or len(verified_origins) > 64
-            or not all(isinstance(item, InstallOrigin) for item in verified_origins)):
+    if type(verified_origins) not in (tuple, list):
+        return Guidance(InstallOrigin.UNKNOWN, _GUIDANCE[InstallOrigin.UNKNOWN])
+    # Inspect a bounded immutable snapshot, never unchecked values from the list.
+    snapshot = tuple(verified_origins[:65])
+    if len(snapshot) > 64 or not all(type(item) is InstallOrigin for item in snapshot):
         origin = InstallOrigin.UNKNOWN
     else:
-        origins = set(verified_origins)
+        origins = set(snapshot)
         origin = next(iter(origins)) if len(origins) == 1 else InstallOrigin.UNKNOWN
     return Guidance(origin, _GUIDANCE[origin])
