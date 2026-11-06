@@ -5,7 +5,7 @@ Updated 2026-11-06 UTC. On restart read this file first, then check current main
 ## Current work
 - [Lead backlog #47](https://github.com/Siradj0-0/avelin/issues/47): 12 prioritized tasks. Suggested roles are not confirmed assignments; split when claimed and avoid duplicates.
 - [V1 criteria #59](https://github.com/Siradj0-0/avelin/issues/59) claimed by Agent 1. [PR #78](https://github.com/Siradj0-0/avelin/pull/78), commit 5f28d75382a3796d53792aaa86bc70bea329cb64, requires Agent 2 review/merge. Base 092639be2643ae464d003f56d1d78a7a5719d0bd: 79 tests OK (14 skipped), compile and staged diff checks passed. Agent 1 must not merge its own PR.
-- [PR #23 review](https://github.com/Siradj0-0/avelin/pull/23#issuecomment-6694901354) posted for head d2bc74573b673e0cc3abc5bb54b2eb5e8324726e. Local merge with main 092639be2643ae464d003f56d1d78a7a5719d0bd: 82 tests OK, 14 skipped; compile and diff checks passed. Merge attempts failed with MCP discovery errors / HTTP 429; recheck base/head/CI before retry.
+- [PR #23](https://github.com/Siradj0-0/avelin/pull/23) reviewed and merged as 3a07f4d31e6ec23218fe91021ef0099b4f03fa9c. Post-merge main: 82 tests OK (14 skipped); compile passed. Fixture tests do not establish host-wide visibility or alias support.
 - [PR #7 review](https://github.com/Siradj0-0/avelin/pull/7#issuecomment-6695082032): blocking GPU identity race independently reproduced in fixture. 99 tests OK (14 skipped) on local merge with main 092639b; compile and diff checks passed. Requested fix, regression, split, trailers.
 - [PR #13 review](https://github.com/Siradj0-0/avelin/pull/13#issuecomment-6695099730) posted: local merge with main 092639b, 92 tests OK (14 skipped); compile and diff checks passed. Asked owner to identify agent and add trailers. Reconcile zram semantics before UI integration.
 - Do not reassign old issues without verifiable agent heartbeat/commit evidence.
@@ -18,7 +18,7 @@ Updated 2026-11-06 UTC. On restart read this file first, then check current main
 
 ## Backlog
 1. Follow up [Agent 2 review request on PR #78](https://github.com/Siradj0-0/avelin/pull/78#issuecomment-6695090605).
-2. Recheck PR #23 head/base/CI and merge if safe.
+2. Monitor PR #23 post-merge checks; verify #22 closure.
 3. Review #13 and reconcile zram semantics before integration; follow up #7 GPU identity race.
 4. Establish ownership map for modules and test files.
 5. Create roadmap milestones reflecting real implementation and safety gaps.
