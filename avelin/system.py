@@ -102,6 +102,7 @@ def desktop() -> str:
 
 
 def zram_status(path: str = '/proc/swaps') -> str:
+    """Detect canonical zram paths; absence is not proof against aliases."""
     swaps = read(path)
     if swaps is None:
         return 'Unavailable'

@@ -21,6 +21,13 @@ class ZramStatusTests(unittest.TestCase):
             with self.subTest(text=text):
                 self.assertEqual(self.status(text), 'Unavailable')
 
+    def test_escaped_space_swapfile_does_not_hide_zram(self):
+        # Linux seq_file_path escapes whitespace in /proc/swaps paths.
+        swaps = (r'Filename Type Size Used Priority' + '\n'
+                 + r'/var/swap\040file file 4096 0 -2' + '\n'
+                 + '/dev/zram0 partition 8192 1024 100\n')
+        self.assertEqual(self.status(swaps), 'Active')
+
     def test_only_canonical_zram_devices_are_detected(self):
         header = 'Filename Type Size Used Priority\n'
         self.assertEqual(self.status(header), 'Not detected')
