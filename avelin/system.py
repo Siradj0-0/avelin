@@ -49,9 +49,9 @@ def memory(path: str = '/proc/meminfo') -> tuple[int, int] | None:
         if match:
             values[match.group(1)] = int(match.group(2)) * 1024
     total, available = values.get('MemTotal'), values.get('MemAvailable')
-    if total is None or available is None or total <= 0:
+    if total is None or available is None or total <= 0 or available > total:
         return None
-    return max(0, total - available), total
+    return total - available, total
 
 
 def cpu_ticks(path: str = '/proc/stat') -> tuple[int, int] | None:
@@ -79,6 +79,8 @@ def cpu_percent(previous: tuple[int, int] | None, current: tuple[int, int] | Non
 def disk(path: str = '/') -> tuple[int, int] | None:
     try:
         usage = shutil.disk_usage(path)
+        if usage.total <= 0:
+            return None
         return usage.used, usage.total
     except OSError:
         return None
