@@ -32,11 +32,11 @@ A catalog of thousands of genuine settings requires ongoing distro- and hardware
 | Downloads, photos, browser profiles and home files | Not automatically classifiable as trash. | Never scanned or deleted by this version |
 | Containers, snapshots, old kernels | Storage may be shared or in use; removal can destroy useful data or recovery capability. Need backend-specific preview and safeguards. | Not implemented |
 
-Storage estimates are bounded, exclude symlinks and filesystem crossings, and mark errors/limits as partial. Allocated-byte estimates can differ from actual recoverable space due to snapshots, compression, shared extents or hard links.
+Storage estimates are bounded, skip descendant symlinks and different-device entries, and mark errors/limits as partial. Initial path prefixes may contain symlinks and same-device bind mounts may be traversed; see [storage safety](storage-safety.md). Allocated-byte estimates can differ from actual recoverable space due to snapshots, compression, shared extents or hard links.
 
 ## Distribution, updates and quality
 
-- Flatpak, DEB, Arch and AppImage packages are **not built yet**. [Flatpak](https://docs.flatpak.org/en/latest/repositories.html) and [AppImage](https://docs.appimage.org/packaging-guide/optional/updates.html) use different distribution/update models. Sandbox host access and privileged operations require a separate security model.
+- An experimental [local DEB build path](packaging.md) exists, but no installer is published. Flatpak, Arch and AppImage packages are **not built yet**. [Flatpak](https://docs.flatpak.org/en/latest/repositories.html) and [AppImage](https://docs.appimage.org/packaging-guide/optional/updates.html) use different distribution/update models. Sandbox host access and privileged operations require a separate security model.
 - Future update installations must use the package manager or a signed/verifiable, package-specific flow, not blindly execute a GitHub download. The current check is informational only.
 - v0.1.0 is a source-only prerelease. v1.0.0 is a future readiness goal, not a guarantee: require real distro/desktop and hardware coverage, package builds, accessibility review, security assessment, recovery tests, documentation and a stable support policy.
 - Expand hardware discovery (disks, GPUs and sensors) and support only readings actually available from the system. Track units and sampling intervals.
