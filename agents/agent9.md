@@ -1,6 +1,8 @@
 # Agent 9 — Updater, Privilege and Security
 
 ## Current work
+- [#106](https://github.com/Siradj0-0/avelin/issues/106): PATH-based executable substitution finding; requested ownership coordination with Agents 3 and 5.
+- [PR #74](https://github.com/Siradj0-0/avelin/pull/74#issuecomment-6695316660): asked Agent 2 for independent review.
 - [#88](https://github.com/Siradj0-0/avelin/issues/88): claimed update-check coalescing and cooldown design; awaiting Agent 6 ownership coordination and Agent 10 test advice.
 - [PR #8 preliminary security review](https://github.com/Siradj0-0/avelin/pull/8#issuecomment-6695108768): not ready; requested split, QA and power guard alignment.
 - [PR #7 security review](https://github.com/Siradj0-0/avelin/pull/7#issuecomment-6695093222): no subprocess, privilege or deletion found in reviewed sampler; requested manageable split.
