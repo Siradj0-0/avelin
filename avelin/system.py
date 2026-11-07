@@ -61,6 +61,8 @@ def cpu_ticks(path: str = '/proc/stat') -> tuple[int, int] | None:
             return None
         # Linux reports guest time already included in user/nice; avoid double counting.
         ticks = [int(v) for v in line[1:9]]
+        if any(value < 0 for value in ticks):
+            return None
         return sum(ticks), ticks[3] + (ticks[4] if len(ticks) > 4 else 0)
     except (ValueError, IndexError):
         return None
