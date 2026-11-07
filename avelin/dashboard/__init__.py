@@ -7,12 +7,16 @@ from .. import system
 class DashboardMixin:
     """Existing dashboard behavior, shared with the application window."""
 
-    def _init_dashboard(self):
+    def _init_dashboard(self, timeout_add_seconds, source_remove):
         self.prev_cpu = None
         self.cpu_history = deque(maxlen=60)
         self.mem_history = deque(maxlen=60)
         self.metric_labels = {}
         self.metric_descriptions = {}
+        self._timeout_add_seconds = timeout_add_seconds
+        self._source_remove = source_remove
+        self._dashboard_timeout = None
+        self._dashboard_has_sampled = False
 
     def dashboard(self):
         from ..app import Gtk, box, label, spacer
@@ -46,7 +50,27 @@ class DashboardMixin:
         p.append(graph_card)
         note = label('GPU activity is not available yet. Storage shows capacity, not disk I/O.', 'muted', True)
         p.append(note)
+        p.connect('map', self._dashboard_map)
+        p.connect('unmap', self._dashboard_unmap)
         return p
+
+    def _dashboard_map(self, _widget):
+        if self._dashboard_timeout is not None:
+            return
+        # Do not draw a continuous line across time when no samples were taken.
+        if self._dashboard_has_sampled:
+            self.cpu_history.append(None)
+            self.mem_history.append(None)
+        self.sample()
+        self._dashboard_has_sampled = True
+        self._dashboard_timeout = self._timeout_add_seconds(2, self.sample)
+
+    def _dashboard_unmap(self, _widget):
+        if self._dashboard_timeout is not None:
+            self._source_remove(self._dashboard_timeout)
+            self._dashboard_timeout = None
+        # The first CPU reading after a pause establishes a fresh baseline.
+        self.prev_cpu = None
 
     def draw_graph(self, area, cr, width, height):
         for y in (0, 0.5, 1):

@@ -8,7 +8,7 @@ from . import DashboardMixin
 class DashboardExtractionTests(unittest.TestCase):
     def setUp(self):
         self.view = DashboardMixin()
-        self.view._init_dashboard()
+        self.view._init_dashboard(Mock(return_value=123), Mock())
         self.view.metric_labels = {key: Mock() for key in ('cpu', 'memory', 'disk')}
         self.view.metric_descriptions = {
             key: (Mock(), text) for key, text in (
@@ -46,6 +46,28 @@ class DashboardExtractionTests(unittest.TestCase):
         self.assertEqual(len(self.view.cpu_history), 60)
         self.assertEqual(len(self.view.mem_history), 60)
         self.assertTrue(all(value is None for value in self.view.mem_history))
+
+    @patch('avelin.dashboard.system.disk', return_value=(25, 100))
+    @patch('avelin.dashboard.system.memory', return_value=(40, 100))
+    @patch('avelin.dashboard.system.cpu_percent', side_effect=[None, 25.0, None])
+    @patch('avelin.dashboard.system.cpu_ticks', side_effect=[(10, 20), (20, 40), (100, 200)])
+    def test_map_unmap_pauses_and_rebaselines_with_graph_gap(self, ticks, percent, memory, disk):
+        view = self.view
+        view._dashboard_map(None)
+        view._dashboard_map(None)
+        view._timeout_add_seconds.assert_called_once_with(2, view.sample)
+        self.assertEqual(ticks.call_count, 1)
+        view.sample()  # scheduled callback while mapped
+        view._dashboard_unmap(None)
+        view._dashboard_unmap(None)
+        view._source_remove.assert_called_once_with(123)
+        self.assertIsNone(view.prev_cpu)
+        self.assertIsNone(view._dashboard_timeout)
+        view._dashboard_map(None)
+        self.assertEqual(view._timeout_add_seconds.call_count, 2)
+        percent.assert_called_with(None, (100, 200))
+        self.assertEqual(list(view.cpu_history), [None, 25.0, None, None])
+        self.assertEqual(list(view.mem_history), [40.0, 40.0, None, 40.0])
 
     def test_graph_breaks_lines_at_gaps_and_keeps_patterns(self):
         self.view.cpu_history.extend([20, None, 40, 50])
