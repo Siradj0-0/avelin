@@ -22,7 +22,7 @@ stage=$(mktemp -d)
 chmod 0755 "$stage"
 trap 'rm -rf "$stage"' EXIT HUP INT TERM
 install -d -m 0755 "$stage/DEBIAN" "$stage/usr/bin" "$stage/usr/lib/avelin/avelin" \
-  "$stage/usr/share/applications" "$stage/usr/share/icons/hicolor/scalable/apps" "$stage/usr/share/doc/avelin"
+  "$stage/usr/share/applications" "$stage/usr/share/metainfo" "$stage/usr/share/icons/hicolor/scalable/apps" "$stage/usr/share/doc/avelin"
 install -m 0644 "$root"/avelin/*.py "$stage/usr/lib/avelin/avelin/"
 # The dashboard is optional on branches preceding its extraction.
 if [ -d "$root/avelin/dashboard" ]; then
@@ -36,6 +36,7 @@ fi
 install -m 0644 "$root/packaging/deb/launcher.py" "$stage/usr/lib/avelin/launcher.py"
 install -m 0755 "$root/packaging/deb/avelin" "$stage/usr/bin/avelin"
 install -m 0644 "$root/packaging/deb/io.github.siradj00.avelin.desktop" "$stage/usr/share/applications/"
+install -m 0644 "$root/packaging/deb/io.github.siradj00.avelin.metainfo.xml" "$stage/usr/share/metainfo/"
 install -m 0644 "$root/assets/avelin.svg" "$stage/usr/share/icons/hicolor/scalable/apps/io.github.siradj00.avelin.svg"
 install -m 0644 "$root/LICENSE" "$stage/usr/share/doc/avelin/copyright"
 cat > "$stage/DEBIAN/control" <<CONTROL
