@@ -2,6 +2,7 @@ name: Tests
 on:
   push:
   pull_request:
+  merge_group:
 permissions:
   contents: read
 jobs:
@@ -13,6 +14,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m unittest ci.test_run_unit_tests -v
+      - run: python -m unittest ci.test_workflow_triggers -v
       - run: python -m ci.run_unit_tests
       - run: python -m compileall -q avelin
   gtk-smoke:
