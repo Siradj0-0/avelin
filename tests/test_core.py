@@ -61,7 +61,7 @@ class UpdateTests(unittest.TestCase):
         from unittest.mock import MagicMock
         response = MagicMock()
         response.__enter__.return_value.read.return_value = b'[{"draft":false,"tag_name":"v0.2.0","prerelease":true},{"draft":true,"tag_name":"v9.0.0"}]'
-        with patch('avelin.updates.urllib.request.urlopen', return_value=response):
+        with patch('avelin.updates._open_release', return_value=response):
             status, text = updates.check_latest()
         self.assertEqual(status, 'new')
         self.assertIn('v0.2.0', text)
@@ -70,5 +70,5 @@ class UpdateTests(unittest.TestCase):
         from unittest.mock import MagicMock
         response = MagicMock()
         response.__enter__.return_value.read.return_value = b'[]'
-        with patch('avelin.updates.urllib.request.urlopen', return_value=response):
+        with patch('avelin.updates._open_release', return_value=response):
             self.assertEqual(updates.check_latest()[0], 'none')

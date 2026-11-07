@@ -22,7 +22,7 @@ class UpdateReliabilityTests(unittest.TestCase):
     def check(self, data):
         response = MagicMock()
         response.__enter__.return_value.read.return_value = data
-        with patch.object(updates.urllib.request, 'urlopen', return_value=response) as open_url:
+        with patch.object(updates, '_open_release', return_value=response) as open_url:
             result = updates.check_latest()
         request = open_url.call_args.args[0]
         self.assertEqual(request.full_url, updates.API_URL)
@@ -95,7 +95,7 @@ class UpdateReliabilityTests(unittest.TestCase):
             (http.client.IncompleteRead(b'{'), 'Could not'),
         ]
         for error, fragment in errors:
-            with self.subTest(error=error), patch.object(updates.urllib.request, 'urlopen', side_effect=error) as open_url:
+            with self.subTest(error=error), patch.object(updates, '_open_release', side_effect=error) as open_url:
                 status, message = updates.check_latest()
                 self.assertEqual(status, 'error')
                 self.assertIn(fragment, message)
@@ -105,12 +105,12 @@ class UpdateReliabilityTests(unittest.TestCase):
     def test_response_read_failure_closes_response(self):
         response = MagicMock()
         response.__enter__.return_value.read.side_effect = http.client.IncompleteRead(b'{')
-        with patch.object(updates.urllib.request, 'urlopen', return_value=response):
+        with patch.object(updates, '_open_release', return_value=response):
             self.assertEqual(updates.check_latest()[0], 'error')
         response.__exit__.assert_called_once()
 
     def test_unsupported_installed_version_avoids_network(self):
-        with patch.object(updates, '__version__', '0.2.0-dev'), patch.object(updates.urllib.request, 'urlopen') as open_url:
+        with patch.object(updates, '__version__', '0.2.0-dev'), patch.object(updates, '_open_release') as open_url:
             self.assertEqual(updates.check_latest()[0], 'unknown')
             open_url.assert_not_called()
 
